@@ -68,15 +68,20 @@ export default function PostList() {
 		<div className="flex flex-col py-20 px-8 md:px-80 ">
 			<h1 className="mb-6 text-gray-700">Latest</h1>
 			{
-				posts.map((i) => {
-					return <div
-					key={i.key}
-					onClick={() => handleRedirect('hugosanchez', i.key.toString())}
-					className="border-t border-black py-6 md:p-8 cursor-pointer">
-						<h2 className="text-xl md:text-2xl font-medium font-serif">{i.title}</h2>
-						<p className="text-black  hidden md:block md:py-1">{i.content}</p>
-						<p className="text-gray-500 text-sm">@hugosanchez</p>
-					</div>
+				posts.map((i, index) => {
+					return (
+						<BlurFade delay={0.1 + index * 0.1}>
+							<div
+								key={i.key}
+								onClick={() => handleRedirect('hugosanchez', i.key.toString())}
+								className="border-t border-black py-6 md:p-8 cursor-pointer">
+								<h2 className="text-xl md:text-2xl font-medium font-serif">{i.title}</h2>
+								<p className="text-black  hidden md:block md:py-1">{i.content}</p>
+								<p className="text-gray-500 text-sm">@hugosanchez</p>
+							</div>
+						</BlurFade>
+					)
+
 				})
 			}
 		</div>
