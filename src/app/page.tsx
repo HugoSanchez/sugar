@@ -1,9 +1,19 @@
+'use client';
+
 import Particles from "@/components/magicui/particles";
 import BlurFade from "@/components/magicui/blur-fade";
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+
+	const router = useRouter();
+
+	const handleReadRedirect = () => {
+		router.push('/read');
+	};
+
 	return (
-		<div className="flex flex-col bg-gray-50 py-20 md:py-52 px-8 md:px-80 ">
+		<div className="flex flex-col py-20 md:py-52 px-8 md:px-80 ">
 			<BlurFade delay={0.1} inView>
 				<h1 className="text-5xl md:text-7xl font-medium font-serif text-black">
 					Read, Write, <br/>Mint - <span className="italic">Literally</span><span className="text-emerald-500">.</span>
@@ -19,7 +29,9 @@ export default function Home() {
 			</p>
 			</BlurFade>
 			<div className="flex flex-row gap-4 mt-8 md:mt-12">
-				<button className="text-black font-light text-lg hover:opacity-60 border border-black mr-4 py-2 px-4">
+				<button
+					onClick={handleReadRedirect}
+					className="text-black font-light text-lg hover:opacity-60 border border-black mr-4 py-2 px-4">
 					Read.
 				</button>
 				<button className="text-black font-light text-lg hover:opacity-60  border border-black mr-4 py-2 px-4">

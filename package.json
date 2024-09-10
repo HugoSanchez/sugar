@@ -10,6 +10,9 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@tiptap/pm": "^2.6.6",
+    "@tiptap/react": "^2.6.6",
+    "@tiptap/starter-kit": "^2.6.6",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.5.4",

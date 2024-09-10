@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import { Inter, Inconsolata, IBM_Plex_Mono } from 'next/font/google'
+import { IBM_Plex_Mono } from 'next/font/google'
 import "./globals.css";
 
-
-const inter = Inter({ subsets: ['latin'] })
-const inconsolata = Inconsolata({ subsets: ['latin'] })
 const ibm_plex_mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['100', '200', '300', '400', '500', '600', '700'] })
 
 export const metadata: Metadata = {
@@ -19,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={ibm_plex_mono.className}>{children}</body>
+      <body className={ibm_plex_mono.className + " bg-gray-50"}>{children}</body>
     </html>
   )
 }
