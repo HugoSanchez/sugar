@@ -66,7 +66,7 @@ export default function PostList() {
 
 	return (
 		<div className="flex flex-col py-20 px-8 md:px-80 ">
-			<h1 className="mb-6 text-gray-700">Latest</h1>
+			<p className="mb-6 text-gray-700">Latest</p>
 			{
 				posts.map((i, index) => {
 					return (

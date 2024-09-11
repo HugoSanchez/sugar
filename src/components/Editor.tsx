@@ -27,13 +27,29 @@ export function SimpleEditor() {
         },
         extensions: [
             Heading.configure({
-                HTMLAttributes: {
-                    levels: [1, 2, 3],
-                },
+                levels: [1, 2, 3],
+				HTMLAttributes: {
+					class: ({ level }: any) => {
+						switch (level) {
+							case 1:
+								return ''
+							case 2:
+								return 'mt-8 md:mt-12 !leading-normal'
+							case 3:
+								return ''
+							default:
+								return ''
+						}
+					}
+				},
             }),
             Document,
             History,
-            Paragraph,
+            Paragraph.configure({
+				HTMLAttributes: {
+					class: "!leading-loose",
+				},
+			}),
             Blockquote,
             Text,
             Link.configure({
@@ -86,11 +102,11 @@ export function SimpleEditor() {
     }, [editor, closeModal]);
 
     const toggleHeading = useCallback(
-        (level: any) => {
-            editor.chain().focus().toggleHeading({ level: level }).run();
-        },
-        [editor]
-    );
+		(level: 1 | 2 | 3) => {
+			editor.chain().focus().toggleHeading({ level }).run();
+		},
+		[editor]
+	);
 
     const toggleBold = useCallback(() => {
         editor.chain().focus().toggleBold().run();
@@ -133,7 +149,7 @@ export function SimpleEditor() {
 					<div
 						onClick={() => console.log('back')}
 						className="border-black border px-4 py-2 cursor-pointer">
-						<p className='font-medium'>Post.</p>
+						<p className='text-base'>Post.</p>
 					</div>
 				</div>
 
