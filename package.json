@@ -10,6 +10,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@privy-io/react-auth": "^1.83.1",
     "@tiptap/extension-link": "^2.6.6",
     "@tiptap/extension-underline": "^2.6.6",
     "@tiptap/pm": "^2.6.6",
