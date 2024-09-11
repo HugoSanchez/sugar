@@ -70,7 +70,7 @@ export default function PostList() {
 			{
 				posts.map((i, index) => {
 					return (
-						<BlurFade delay={0.1 + index * 0.1}>
+						<BlurFade delay={index * 0.03}>
 							<div
 								key={i.key}
 								onClick={() => handleRedirect('hugosanchez', i.key.toString())}

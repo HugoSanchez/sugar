@@ -10,10 +10,13 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@tiptap/extension-link": "^2.6.6",
+    "@tiptap/extension-underline": "^2.6.6",
     "@tiptap/pm": "^2.6.6",
     "@tiptap/react": "^2.6.6",
     "@tiptap/starter-kit": "^2.6.6",
     "class-variance-authority": "^0.7.0",
+    "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "framer-motion": "^11.5.4",
     "lucide-react": "^0.439.0",
