@@ -122,12 +122,21 @@ export function SimpleEditor() {
 
     return (
         <>
-            <div className="relative mt-28 lg:mt-0 mb-20 lg:mb-0 lg:m-20 px-6 lg:px-0 lg:p-20">
-                <div
-                    onClick={() => console.log('back')}
-                    className="z-20 fixed top-16 lg:top-16 left-5 lg:left-12 h-8 w-8 lg:h-12 lg:w-12 rounded-full cursor-pointer flex items-center justify-center">
-                    <Icons.ArrowLeft />
-                </div>
+            <div className="">
+				<div className='fixed top-8 left-0 px-8 md:px-12 flex flex-row items-center justify-between w-full'>
+					<button
+						onClick={() => console.log('back')}
+						className="cursor-pointer border-black">
+						<Icons.ArrowLeft />
+					</button>
+
+					<div
+						onClick={() => console.log('back')}
+						className="border-black border px-4 py-2 cursor-pointer">
+						<p className='font-medium'>Post.</p>
+					</div>
+				</div>
+
 
                 <BubbleMenu
                     pluginKey="bubbleMenuText"
@@ -224,21 +233,8 @@ export function SimpleEditor() {
                     </button>
                 </BubbleMenu>
 
-                <div className="lg:mt-20 lg:px-40">
+                <div className="mt-20 md:mt-0">
                     <EditorContent editor={editor} />
-                </div>
-
-                <div className="h-16 fixed bottom-0 right-0 flex flex-row items-center justify-center lg:justify-end">
-                    <button
-                        onClick={() => console.log('save')}
-                        className="h-16 px-10 bg-zinc800 shadow-lg flex flex-row items-center justify-center hover:opacity-90 cursor-pointer text-sm sm:text-base">
-                        {loading ? (
-                            <div className='h-10 w-10 bg-zinc100 rounded-full'></div>
-
-                        ) : (
-                            <p className="text-zinc100">Mint Verso</p>
-                        )}
-                    </button>
                 </div>
             </div>
         </>

@@ -4,7 +4,7 @@ import { SimpleEditor } from '../../../components/Editor'
 
 export default function Home() {
   return (
-    <div className="container mx-auto p-4">
+    <div className='flex flex-col py-20 md:py-52 px-8 md:px-80 '>
       <SimpleEditor />
     </div>
   )
