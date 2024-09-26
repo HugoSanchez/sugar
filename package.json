@@ -10,22 +10,27 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@privy-io/react-auth": "^1.83.1",
+    "@privy-io/react-auth": "^1.87.0",
+    "@supabase/supabase-js": "^2.45.4",
     "@tiptap/extension-link": "^2.6.6",
+    "@tiptap/extension-placeholder": "^2.7.4",
     "@tiptap/extension-underline": "^2.6.6",
     "@tiptap/pm": "^2.6.6",
     "@tiptap/react": "^2.6.6",
     "@tiptap/starter-kit": "^2.6.6",
+    "@zoralabs/protocol-sdk": "^0.9.6",
     "class-variance-authority": "^0.7.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
+    "ethers": "^5.7.2",
     "framer-motion": "^11.5.4",
     "lucide-react": "^0.439.0",
     "next": "14.2.9",
     "react": "^18",
     "react-dom": "^18",
     "tailwind-merge": "^2.5.2",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "viem": "^2.21.6"
   },
   "devDependencies": {
     "@types/node": "^20",

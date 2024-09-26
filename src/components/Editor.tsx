@@ -16,16 +16,20 @@ import Italic from "@tiptap/extension-italic";
 import Strike from "@tiptap/extension-strike";
 import Code from "@tiptap/extension-code";
 import History from "@tiptap/extension-history";
+import Placeholder from '@tiptap/extension-placeholder'
 
 
 export function SimpleEditor() {
 	const editor = useEditor({
 		editorProps: {
 			attributes: {
-				class: "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none",
+				class: 'tiptap prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none',
 			},
 		},
 		extensions: [
+			Placeholder.configure({
+				placeholder: `write something...`,
+			}),
 			Heading.configure({
 				levels: [1, 2, 3],
 				HTMLAttributes: {
@@ -61,7 +65,7 @@ export function SimpleEditor() {
 			Strike,
 			Code,
 		],
-		content: `<p>Type something...</p>`,
+		content: '',
 	}) as Editor;
 
 	// const router = useRouter();
@@ -136,6 +140,12 @@ export function SimpleEditor() {
 		editor.chain().focus().toggleCode().run();
 	}, [editor]);
 
+	const mint = useCallback(() => {
+		const json = editor.getHTML();
+		const stringified = JSON.stringify(json);
+		console.log('mint', stringified.length);
+	}, [editor]);
+
 	if (!editor) {
 		return null;
 	}
@@ -143,14 +153,15 @@ export function SimpleEditor() {
 	return (
 		<>
 			<div className="">
-				<div className='fixed top-8 left-0 px-8 md:px-12 flex flex-row items-center justify-between w-full'>
+				<div
+					className='fixed top-16 left-0 px-6 md:px-16 flex flex-row items-center justify-between w-full'>
 					<button
 						onClick={() => console.log('back')}
 						className="cursor-pointer border-black">
 						<Icons.ArrowLeft />
 					</button>
 
-					<div>
+					<div onClick={mint}>
 						<MintButton />
 					</div>
 				</div>
@@ -247,7 +258,7 @@ export function SimpleEditor() {
 					</button>
 				</BubbleMenu>
 
-				<div className="mt-20 md:mt-0">
+				<div className="mt-16 md:mt-0">
 					<EditorContent editor={editor} />
 				</div>
 			</div>
