@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Providers } from "./providers";
 import { IBM_Plex_Mono } from 'next/font/google'
-import Header from '@/components/Header'
+// import Header from '@/components/Header'
 import "./globals.css";
 
 const ibm_plex_mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['100', '200', '300', '400', '500', '600', '700'] })

@@ -1,42 +1,29 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { SimpleEditor } from '../../components/Editor'
+import { useState } from 'react'
+import PostButton from '@/components/PostButton'
+import { RevervEditor } from '../../components/Editor'
+import Header from '@/components/Header'
+
+// Simple page that serves as a wrapper for the editor and the post button
+// This is basically the editor rendering plus a custom header with a post button
+// The post button is passed the editor content as a prop
 
 export default function Write() {
-	const [isScrolled, setIsScrolled] = useState(false)
+	const [editorContent, setEditorContent] = useState('');
 
-	useEffect(() => {
-		const handleScroll = () => {
-			if (window.scrollY > 0) {
-				setIsScrolled(true)
-			} else {
-				setIsScrolled(false)
-			}
-		}
+	const handleEditorChange = (content: string) => {
+		setEditorContent(content);
+	};
 
-		window.addEventListener('scroll', handleScroll)
-
-		return () => {
-			window.removeEventListener('scroll', handleScroll)
-		}
-	}, [])
 	return (
-		<div className='flex flex-col py-20 md:py-32 px-8 md:px-80 '>
-			<header className={`fixed top-0 left-0 right-0 bg-gray-50 z-10 transition-shadow duration-300 h-20 ${
-				isScrolled ? 'shadow-md' : ''
-			}`}>
-				<div className="mx-auto px-6 md:px-16 h-full flex justify-between items-center">
-					<Link href="/" className="text-xl font-bold text-primary ">
-						<p className="font-medium">reverv.</p>
-					</Link>
-					<div className=''>
-						<p className="text-base text-black cursor-pointer">post.</p>
-					</div>
-				</div>
-			</header>
-			<SimpleEditor />
-		</div>
+		<>
+			<Header>
+				<PostButton editorContent={editorContent}/>
+			</Header>
+			<div className='flex flex-col py-20 md:py-32 px-8 md:px-80 '>
+				<RevervEditor onEditorChange={handleEditorChange}/>
+			</div>
+		</>
 	)
 }

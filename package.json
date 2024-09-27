@@ -10,7 +10,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@privy-io/react-auth": "^1.87.0",
+    "@privy-io/react-auth": "^1.67.0",
     "@supabase/supabase-js": "^2.45.4",
     "@tiptap/extension-link": "^2.6.6",
     "@tiptap/extension-placeholder": "^2.7.4",

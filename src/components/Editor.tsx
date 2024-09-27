@@ -16,7 +16,7 @@ import History from "@tiptap/extension-history";
 import Placeholder from '@tiptap/extension-placeholder'
 
 
-export function SimpleEditor() {
+export function RevervEditor({ onEditorChange }: { onEditorChange: (html: string) => void }) {
 	const editor = useEditor({
 		editorProps: {
 			attributes: {
@@ -61,6 +61,9 @@ export function SimpleEditor() {
 			Code,
 		],
 		content: '',
+		onUpdate: ({ editor }) => {
+			onEditorChange(editor.getHTML());
+		},
 	}) as Editor;
 
 	if (!editor) {
