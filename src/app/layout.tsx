@@ -19,7 +19,6 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={ibm_plex_mono.className + " bg-gray-50"}>
-				<Header />
 				<Providers>{children}</Providers>
 			</body>
 		</html>
