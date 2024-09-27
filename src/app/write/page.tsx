@@ -24,7 +24,7 @@ export default function Write() {
 	}, [])
 	return (
 		<div className='flex flex-col py-20 md:py-32 px-8 md:px-80 '>
-			<header className={`fixed top-0 left-0 right-0 bg-gray-50 z-10 transition-shadow duration-300 h-16 ${
+			<header className={`fixed top-0 left-0 right-0 bg-gray-50 z-10 transition-shadow duration-300 h-20 ${
 				isScrolled ? 'shadow-md' : ''
 			}`}>
 				<div className="mx-auto px-6 md:px-16 h-full flex justify-between items-center">
@@ -32,7 +32,7 @@ export default function Write() {
 						<p className="font-medium">reverv.</p>
 					</Link>
 					<div className=''>
-						<p className="text-lg text-black cursor-pointer">post.</p>
+						<p className="text-base text-black cursor-pointer">post.</p>
 					</div>
 				</div>
 			</header>

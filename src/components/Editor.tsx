@@ -36,8 +36,6 @@ export function SimpleEditor() {
 							return 'font-mono'
 						case 2:
 							return 'mt-8 md:mt-12 !leading-normal'
-						case 3:
-							return ''
 						default:
 							return ''
 						}
