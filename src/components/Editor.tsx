@@ -73,7 +73,7 @@ export function RevervEditor({ onEditorChange }: { onEditorChange: (html: string
 	return (
 		<>
 			<div className="">
-				<div className="mt-14 md:mt-0">
+				<div className="mt-14 pb-20 md:mt-0">
 					<EditorMenu editor={editor} />
 					<EditorContent editor={editor} />
 				</div>
