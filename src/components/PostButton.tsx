@@ -130,7 +130,7 @@ const PostButton = ({editorContent}: {editorContent: string}) => {
 			<button
 				disabled={isLoading}
 				onClick={handlePost}
-				className='z-20 absolute bottom-0 right-4 md:right-6 px-8 md:px-12 py-3 md:py-4 bg-gray-900 rounded-md hover:bg-gray-800'
+				className='z-20 absolute bottom-0 right-4 md:right-6 px-8 md:px-12 py-3 md:py-4 bg-gray-900 shadow-lg rounded-md hover:bg-gray-800'
 			>
 				<p className='text-white text-base mb-1'>post.</p>
 			</button>

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import PostButton from '@/components/PostButton'
 import { RevervEditor } from '../../components/Editor'
-import Header from '@/components/Header'
 
 // Simple page that serves as a wrapper for the editor and the post button
 // This is basically the editor rendering plus a custom header with a post button
@@ -18,11 +17,9 @@ export default function Write() {
 
 	return (
 		<>
-			<Header>
-				<PostButton editorContent={editorContent}/>
-			</Header>
 			<div className='flex flex-col py-20 md:py-32 px-8 md:px-80 '>
 				<RevervEditor onEditorChange={handleEditorChange}/>
+				<PostButton editorContent={editorContent}/>
 			</div>
 		</>
 	)

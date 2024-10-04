@@ -1,4 +1,5 @@
 import EditorMenu from './EditorMenu';
+import PostButton from './PostButton';
 
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import Heading from "@tiptap/extension-heading";
@@ -74,6 +75,7 @@ export function RevervEditor({ onEditorChange }: { onEditorChange: (html: string
 		<>
 			<div className="">
 				<div className="mt-14 pb-20 md:mt-0">
+					<PostButton editorContent={editor.getHTML()}/>
 					<EditorMenu editor={editor} />
 					<EditorContent editor={editor} />
 				</div>

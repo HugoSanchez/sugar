@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Providers } from "./providers";
 import { IBM_Plex_Mono } from 'next/font/google'
+import SlidingMenuLayout from "@/components/SlidingMenuLayout";
 // import Header from '@/components/Header'
 import "./globals.css";
 
@@ -19,7 +20,11 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={ibm_plex_mono.className + " bg-gray-50"}>
-				<Providers>{children}</Providers>
+				<Providers>
+					<SlidingMenuLayout>
+						{children}
+					</SlidingMenuLayout>
+				</Providers>
 			</body>
 		</html>
 	)
