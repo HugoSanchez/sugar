@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
 	const [isScrolled, setIsScrolled] = useState(false)
-	const { authenticated, login } = useAuth();
+	const { authenticated, login, ready } = useAuth();
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -39,12 +39,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
 					<p className="font-medium">reverv.</p>
 				</Link>
 				<div className='flex flex-row gap-3 md:gap-6 items-center'>
-					{authenticated ? (
-						<button onClick={onMenuClick} className="hover:opacity-80">
-							<Menu />
-						</button>
-					) : (
-						<Button text="login." onClick={login} className='font-medium text-gray-800 hover:text-gray-900' />
+					{ready && (
+						authenticated ? (
+							<button onClick={onMenuClick} className="hover:opacity-80">
+								<Menu />
+							</button>
+						) : (
+							<Button text="login." onClick={login} className='font-medium text-gray-800 hover:text-gray-900' />
+						)
 					)}
 				</div>
 			</div>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 
@@ -12,7 +13,13 @@ interface SlidingMenuLayoutProps {
 }
 
 const SlidingMenuLayout = ({ children, isMenuOpen, onClose }: SlidingMenuLayoutProps) => {
-	const { authenticated, logout, user } = useAuth();
+	const { authenticated, logout } = useAuth();
+	const router = useRouter();
+
+	const handleProfileClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		router.push('/profile');
+	};
 
 	return (
 		<div className="relative min-h-screen overflow-hidden">
@@ -27,16 +34,16 @@ const SlidingMenuLayout = ({ children, isMenuOpen, onClose }: SlidingMenuLayoutP
 							<li><Link href="/read" className="block p-2 rounded hover:italic">read.</Link></li>
 							<li><Link href="/write" className="block p-2 rounded hover:italic">write.</Link></li>
 							<li>
-								<Link
-									href={`/profile/${user?.id}`}
-									className="block p-2 rounded hover:italic"
+								<button
+									onClick={handleProfileClick}
+									className="block p-2 rounded hover:italic w-full text-left"
 								>
 									profile.
-								</Link>
+								</button>
 							</li>
 							<li>
 								<Button
-									text="logout"
+									text="logout."
 									onClick={logout}
 									className="block p-2 rounded absolute bottom-10 text-left bg-gray-300 text-gray-800 hover:text-gray-900"
 								/>

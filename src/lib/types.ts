@@ -1,12 +1,12 @@
 export interface Profile {
   id: string;
-  name: string;
   username: string;
+  name: string;
   description: string;
+  createdAt?: Date;
+  updatedAt?: Date;
   farcasterAddress?: string;  // Optional Farcaster connected address
   farcasterFid?: number;      // Optional Farcaster ID
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-export type CreateProfileInput = Omit<Profile, 'id' | 'createdAt' | 'updatedAt'>;
+export type CreateProfileInput = Omit<Profile, 'createdAt' | 'updatedAt'>;

@@ -87,7 +87,7 @@ export default function ProfilePage() {
 					<p className="text-sm text-gray-400">0x2844..938h</p>
 				</div>
 				<div className='flex w-3/4 justify-end items-center'>
-					<Button text="Subscribe" />
+					<Button text="Subscribe" className="bg-teal-100"/>
 				</div>
 			</div>
 
