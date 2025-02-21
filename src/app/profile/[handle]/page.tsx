@@ -79,23 +79,34 @@ export default function ProfilePage() {
 
 	return (
 		<div className="w-full px-4 md:px-72 py-24">
+			{/* Profile Header - Always side by side */}
 			<div className="mb-6 flex flex-row">
 				<div className='flex flex-col w-1/4'>
 					<h1 className="text-lg font-medium leading-tight">Woj.eth</h1>
 					<h3 className="text-sm font-light text-gray-700">@{decodeURIComponent(handle as string)}</h3>
 					<p className="text-sm text-gray-400">0x2844..938h</p>
-
 				</div>
 				<div className='flex w-3/4 justify-end items-center'>
 					<Button text="Subscribe" />
 				</div>
 			</div>
-			<div className="space-y-16">
+
+			{/* Sections */}
+			<div className="space-y-12 md:space-y-16">
 				{sections.map((section) => (
-					<section key={section.title} className="grid grid-cols-4 gap-8 border-t border-gray-300 pt-8">
-						<p className="text-gray-800 text-sm font-medium">{section.title}</p>
-						<div className="col-span-3">
-							{section.content}
+					<section key={section.title} className="border-t border-gray-300 pt-8">
+						{/* Mobile: Stack vertically */}
+						<div className="block md:hidden">
+							<p className="text-gray-800 text-sm font-medium mb-4">{section.title}</p>
+							<div>{section.content}</div>
+						</div>
+
+						{/* Desktop: Grid layout */}
+						<div className="hidden md:grid md:grid-cols-4 md:gap-8">
+							<p className="text-gray-800 text-sm font-medium">{section.title}</p>
+							<div className="col-span-3">
+								{section.content}
+							</div>
 						</div>
 					</section>
 				))}
