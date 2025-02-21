@@ -1,22 +1,10 @@
 "use client";
 
 import Link from 'next/link';
-import Header from '@/components/Header';
+
 export default function Home() {
 	return (
 		<>
-			<Header>
-				<Link
-					href="/read"
-					className="text-black text-md hover:opacity-80">
-				read
-				</Link>
-				<Link
-					href="/write"
-					className="text-black text-md hover:opacity-80">
-				write
-				</Link>
-			</Header>
 
 			<div className="flex flex-col py-32 md:py-52 px-8 md:px-80 ">
 				<h1 className="text-3xl md:text-6xl">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
 
 interface Section {
   title: string;
@@ -25,22 +26,22 @@ export default function ProfilePage() {
 			title: 'Writings',
 			content: (
 				<div className="space-y-3">
-					<a href="#" className="block text-gray-700 hover:text-gray-900">
+					<a href="#" className="text-sm block text-gray-700 font-light hover:text-gray-900 hover:underline">
             ↗ On building a blockchain
 					</a>
-					<a href="#" className="block text-gray-700 hover:text-gray-900">
+					<a href="#" className="text-sm block text-gray-700 font-light hover:text-gray-900">
             ↗ On crypto startup ideas for 2024
 					</a>
-					<a href="#" className="block text-gray-700 hover:text-gray-900">
+					<a href="#" className="text-sm block text-gray-700 font-light hover:text-gray-900">
             ↗ On crypto startup ideas for 2023
 					</a>
-					<a href="#" className="block text-gray-700 hover:text-gray-900">
+					<a href="#" className="text-sm block text-gray-700 font-light hover:text-gray-900">
             ↗ On the future of pensions in Canada
 					</a>
-					<a href="#" className="block text-gray-700 hover:text-gray-900">
+					<a href="#" className="text-sm block text-gray-700 font-light hover:text-gray-900">
             ↗ On Uber&apos;s surge pricing
 					</a>
-					<a href="#" className="block text-gray-500 text-sm hover:text-gray-700">
+					<a href="#" className="text-xs block text-gray-500 hover:text-gray-700">
             View all
 					</a>
 				</div>
@@ -86,9 +87,7 @@ export default function ProfilePage() {
 
 				</div>
 				<div className='flex w-3/4 justify-end items-center'>
-					<button className="bg-gray-200 px-4 py-2 rounded-full text-sm text-gray-700 hover:opacity-100 opacity-90">
-						Subscribe
-					</button>
+					<Button text="Subscribe" />
 				</div>
 			</div>
 			<div className="space-y-16">

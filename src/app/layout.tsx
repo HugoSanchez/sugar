@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { Providers } from "./providers";
-import { IBM_Plex_Mono } from 'next/font/google'
-import SlidingMenuLayout from "@/components/SlidingMenuLayout";
-// import Header from '@/components/Header'
+import { IBM_Plex_Mono } from 'next/font/google';
+import ClientLayout from "@/components/ClientLayout";
 import "./globals.css";
 
 const ibm_plex_mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['100', '200', '300', '400', '500', '600', '700'] })
@@ -20,12 +18,10 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={ibm_plex_mono.className + " bg-gray-50"}>
-				<Providers>
-					<SlidingMenuLayout>
-						{children}
-					</SlidingMenuLayout>
-				</Providers>
+				<ClientLayout>
+					{children}
+				</ClientLayout>
 			</body>
 		</html>
-	)
+	);
 }
