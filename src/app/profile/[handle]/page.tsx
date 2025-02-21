@@ -81,7 +81,7 @@ export default function ProfilePage() {
 		<div className="w-full px-4 md:px-72 py-24">
 			<div className="mb-6 flex flex-row">
 				<div className='flex flex-col w-1/4'>
-					<h1 className="text-lg font-medium leading-tight">Hugo Sanchez</h1>
+					<h1 className="text-lg font-medium leading-tight">Woj.eth</h1>
 					<h3 className="text-sm font-light text-gray-700">@{decodeURIComponent(handle as string)}</h3>
 					<p className="text-sm text-gray-400">0x2844..938h</p>
 

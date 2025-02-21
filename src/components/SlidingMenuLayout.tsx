@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/Button';
 
 interface SlidingMenuLayoutProps {
 	children: React.ReactNode;
@@ -34,12 +35,11 @@ const SlidingMenuLayout = ({ children, isMenuOpen, onClose }: SlidingMenuLayoutP
 								</Link>
 							</li>
 							<li>
-								<button
+								<Button
+									text="logout"
 									onClick={logout}
-									className="block p-2 rounded hover:italic absolute bottom-10 text-left w-full"
-								>
-									logout.
-								</button>
+									className="block p-2 rounded absolute bottom-10 text-left bg-gray-300 text-gray-800 hover:text-gray-900"
+								/>
 							</li>
 						</ul>
 					</nav>
