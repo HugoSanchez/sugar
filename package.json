@@ -10,6 +10,8 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@farcaster/auth-kit": "^0.6.0",
+    "@farcaster/core": "^0.15.6",
     "@privy-io/react-auth": "^1.70.0",
     "@supabase/supabase-js": "^2.45.4",
     "@tiptap/extension-link": "^2.6.6",
