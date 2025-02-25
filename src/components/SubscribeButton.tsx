@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { subscribeToUser, unsubscribeFromUser } from '@/lib/db';
+import { subscribeToUser, unsubscribeFromUser, isSubscribedToUser } from '@/lib/db';
 
 interface SubscribeButtonProps {
 	publisherId: string;
@@ -19,6 +19,26 @@ export function SubscribeButton({
 	const { user: currentUser, login, ready } = useAuth();
 	const [isSubscribing, setIsSubscribing] = useState(false);
 	const [isSubscribed, setIsSubscribed] = useState(initialIsSubscribed);
+	const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+
+	// Check subscription status when component mounts or when user changes
+	useEffect(() => {
+		async function checkSubscriptionStatus() {
+			if (!currentUser?.id || !publisherId) return;
+
+			try {
+				const subscriptionStatus = await isSubscribedToUser(currentUser.id, publisherId);
+				setIsSubscribed(subscriptionStatus);
+				onSubscriptionChange?.(subscriptionStatus);
+			} catch (error) {
+				console.error('Error checking subscription status:', error);
+			} finally {
+				setIsCheckingStatus(false);
+			}
+		}
+
+		checkSubscriptionStatus();
+	}, [currentUser?.id, publisherId, onSubscriptionChange]);
 
 	const handleSubscribe = async () => {
 		// If user is not logged in, trigger login flow
@@ -47,8 +67,8 @@ export function SubscribeButton({
 		}
 	};
 
-	// Don't render anything until Privy is ready
-	if (!ready) return null;
+	// Don't render anything until Privy is ready and we've checked subscription status
+	if (!ready || isCheckingStatus) return null;
 
 	return (
 		<Button
