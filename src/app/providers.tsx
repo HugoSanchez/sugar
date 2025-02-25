@@ -13,7 +13,7 @@ export function Providers({ children, ...props }: { children: ReactNode }) {
 			{...filteredProps}
 			appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
 			config={{
-				loginMethods: ['email', 'wallet'],
+				loginMethods: ['email'],
 				appearance: {
 					theme: 'light',
 					accentColor: '#676FFF',

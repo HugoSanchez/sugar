@@ -1,34 +1,40 @@
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
 import { getUserByPrivyId, createUser } from '@/lib/db';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { User } from '@/lib/types';
 
 export function useAuth() {
-	const { login: privyLogin, logout, authenticated, ready, user } = usePrivy();
+	const { login: privyLogin, logout, authenticated, ready, user: privyUser } = usePrivy();
 	const router = useRouter();
 	const loginHandled = useRef(false);
+	const [dbUser, setDbUser] = useState<User | null>(null);
 
 	useEffect(() => {
 		async function handleUserLogin() {
-			if (!user || !authenticated || loginHandled.current) return;
+			if (!privyUser || !authenticated || loginHandled.current) return;
 			loginHandled.current = true;
 
 			try {
-				const existingUser = await getUserByPrivyId(user.id);
+				const existingUser = await getUserByPrivyId(privyUser.id);
 
-				if (!existingUser && user.wallet?.address && user.email?.address) {
-					await createUser({
-						privyId: user.id,
-						walletAddress: user.wallet.address,
-						emailAddress: user.email.address,
+				if (!existingUser && privyUser.wallet?.address && privyUser.email?.address) {
+					const newUser = await createUser({
+						privyId: privyUser.id,
+						walletAddress: privyUser.wallet.address,
+						emailAddress: privyUser.email.address,
 						username: '',
 						name: '',
 						description: '',
 						farcasterAddress: ''
 					});
+					setDbUser(newUser);
 					router.push('/profile');
-				} else if (existingUser && !existingUser.username) {
-					router.push('/profile');
+				} else if (existingUser) {
+					setDbUser(existingUser);
+					if (!existingUser.username) {
+						router.push('/profile');
+					}
 				}
 			} catch (error) {
 				console.error('Error handling login:', error);
@@ -37,11 +43,12 @@ export function useAuth() {
 		}
 
 		handleUserLogin();
-	}, [user, authenticated, router]);
+	}, [privyUser, authenticated, router]);
 
 	const handleLogout = async () => {
 		await logout();
 		loginHandled.current = false;
+		setDbUser(null);
 		router.push('/');
 	};
 
@@ -50,6 +57,7 @@ export function useAuth() {
 		logout: handleLogout,
 		authenticated,
 		ready,
-		user
+		user: dbUser,
+		privyUser
 	};
 }

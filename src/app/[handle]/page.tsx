@@ -2,24 +2,44 @@
 
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { getUserByUsername } from '@/lib/db';
+import {
+	getUserByUsername,
+	isSubscribedToUser
+} from '@/lib/db';
 import { useState, useEffect } from 'react';
 import { User } from '@/lib/types';
 import { Spinner } from '@/components/ui/spinner';
+import { useAuth } from '@/hooks/useAuth';
+import { SubscribeButton } from '@/components/SubscribeButton';
 
 export default function ProfilePage() {
+	// Get the username from the URL parameters
 	const { handle } = useParams();
-	const [user, setUser] = useState<User | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
+	// Get the currently authenticated user from Privy
+	const { user: currentUser } = useAuth();
+
+	// State management
+	const [user, setUser] = useState<Partial<User> | null>(null);          // Profile data of the user being viewed
+	const [isLoading, setIsLoading] = useState(true);                      // Loading state for initial data fetch
+	const [isSubscribed, setIsSubscribed] = useState(false);              // Whether current user is subscribed to this profile
 
 	useEffect(() => {
+		// Function to load profile data and check subscription status
 		async function loadUserData() {
 			if (!handle) return;
 
 			try {
+				// Fetch the profile data for the username in the URL
 				const userData = await getUserByUsername(decodeURIComponent(handle as string));
 				setUser(userData);
-				console.log('userData', userData);
+
+				// Only check subscription status if we have both:
+				// 1. A logged-in user (currentUser)
+				// 2. A valid profile we're viewing (userData)
+				if (currentUser?.id && userData?.id) {
+					const subscribed = await isSubscribedToUser(currentUser.id, userData.id);
+					setIsSubscribed(subscribed);
+				}
 			} catch (error) {
 				console.error('Error loading user:', error);
 			} finally {
@@ -28,12 +48,14 @@ export default function ProfilePage() {
 		}
 
 		loadUserData();
-	}, [handle]);
+	}, [handle, currentUser?.id]); // Re-run when URL changes or user logs in/out
 
+	// Show loading spinner while fetching initial data
 	if (isLoading) {
 		return <Spinner />;
 	}
 
+	// Show error state if profile doesn't exist
 	if (!user) {
 		return (
 			<div className="flex items-center justify-center px-4 w-full h-full">
@@ -123,9 +145,13 @@ export default function ProfilePage() {
 					)}
 				</div>
 				<div className='flex w-2/4 justify-end items-center'>
-					<Button className="bg-teal-100 hover:bg-teal-200">
-						Subscribe
-					</Button>
+					{user?.id && (
+						<SubscribeButton
+							publisherId={user.id}
+							isSubscribed={isSubscribed}
+							onSubscriptionChange={setIsSubscribed}
+						/>
+					)}
 				</div>
 			</div>
 
