@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './useAuth';
-import { getProfileByUsername } from '@/lib/db';
+import { getUserByUsername } from '@/lib/db';
 
 export function useProfile() {
 	const { user, authenticated } = useAuth();
@@ -16,7 +16,7 @@ export function useProfile() {
 			}
 
 			try {
-				const profile = await getProfileByUsername(user.id);
+				const profile = await getUserByUsername(user.id);
 				setHasProfile(!!profile);
 			} catch (error) {
 				console.error('Error checking profile:', error);

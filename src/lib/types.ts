@@ -1,5 +1,8 @@
-export interface Profile {
+export interface User {
   id: string;
+  privyId: string;      // Required Privy user ID
+  walletAddress: string; // Required wallet address
+  emailAddress: string;  // Required email address
   username: string;
   name: string;
   description: string;
@@ -9,4 +12,4 @@ export interface Profile {
   farcasterFid?: number;      // Optional Farcaster ID
 }
 
-export type CreateProfileInput = Omit<Profile, 'createdAt' | 'updatedAt'>;
+export type CreateUserInput = Omit<User, 'createdAt' | 'updatedAt'>;

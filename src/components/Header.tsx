@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
 	const [isScrolled, setIsScrolled] = useState(false)
-	const { authenticated, login, ready } = useAuth();
+	const { authenticated, login, ready, user } = useAuth();
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -23,12 +23,15 @@ export default function Header({ onMenuClick }: HeaderProps) {
 			}
 		}
 
+		// Log the first wallet's address if available
+		console.log('user', user);
+
 		window.addEventListener('scroll', handleScroll)
 
 		return () => {
 			window.removeEventListener('scroll', handleScroll)
 		}
-	}, [])
+	}, [user])
 
 	return (
 		<header className={`fixed top-0 left-0 right-0 bg-gray-50 z-10 transition-shadow duration-300 h-16 ${
