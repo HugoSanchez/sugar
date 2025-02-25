@@ -1,55 +1,55 @@
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
 import { getUserByPrivyId, createUser } from '@/lib/db';
+import { useEffect, useRef } from 'react';
 
 export function useAuth() {
 	const { login: privyLogin, logout, authenticated, ready, user } = usePrivy();
-	// const { wallets } = useWallets();
 	const router = useRouter();
+	const loginHandled = useRef(false);
 
-	const handleLogin = async () => {
-		await privyLogin();
-
-		if (user) {
-			console.log('user logged in:', user);
+	useEffect(() => {
+		async function handleUserLogin() {
+			if (!user || !authenticated || loginHandled.current) return;
+			loginHandled.current = true;
 
 			try {
-				// Check if user exists by their Privy ID
 				const existingUser = await getUserByPrivyId(user.id);
 
-				// If user doesn't exist, create them with required fields
 				if (!existingUser && user.wallet?.address && user.email?.address) {
 					await createUser({
-						id: crypto.randomUUID(), // Generate a unique ID
 						privyId: user.id,
 						walletAddress: user.wallet.address,
 						emailAddress: user.email.address,
 						username: '',
 						name: '',
 						description: '',
-						farcasterAddress: user.wallet.address // Optional: use same address for Farcaster
+						farcasterAddress: ''
 					});
 					router.push('/profile');
 				} else if (existingUser && !existingUser.username) {
-					// If user exists but hasn't set a username
 					router.push('/profile');
 				}
 			} catch (error) {
 				console.error('Error handling login:', error);
+				loginHandled.current = false; // Reset on error to allow retry
 			}
 		}
-	};
+
+		handleUserLogin();
+	}, [user, authenticated, router]);
 
 	const handleLogout = async () => {
 		await logout();
+		loginHandled.current = false;
 		router.push('/');
 	};
 
 	return {
-		login: handleLogin,
+		login: privyLogin,
 		logout: handleLogout,
 		authenticated,
 		ready,
-		user,
+		user
 	};
 }

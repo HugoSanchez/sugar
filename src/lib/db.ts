@@ -31,7 +31,24 @@ export async function getUserByPrivyId(privyId: string): Promise<User | null> {
 			.single();
 
 		if (error) throw error;
-		return data;
+
+		// Map snake_case back to camelCase
+		if (data) {
+			return {
+				id: data.id,
+				privyId: data.privy_id,
+				walletAddress: data.wallet_address,
+				emailAddress: data.email_address,
+				username: data.username,
+				name: data.name,
+				description: data.description,
+				farcasterAddress: data.farcaster_address,
+				farcasterFid: data.farcaster_fid,
+				createdAt: new Date(data.created_at),
+				updatedAt: new Date(data.updated_at)
+			};
+		}
+		return null;
 	} catch (error) {
 		console.error('Error getting user by Privy ID:', error);
 		return null;
@@ -56,18 +73,45 @@ export async function getUserByWalletAddress(walletAddress: string): Promise<Use
 
 export async function createUser(user: CreateUserInput): Promise<User | null> {
 	try {
+		// Map camelCase to snake_case for database columns
+		const dbUser = {
+			privy_id: user.privyId,
+			wallet_address: user.walletAddress,
+			email_address: user.emailAddress,
+			username: user.username,
+			name: user.name,
+			description: user.description,
+			farcaster_address: user.farcasterAddress,
+			farcaster_fid: user.farcasterFid,
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString()
+		};
+
 		const { data, error } = await supabase
 			.from('users')
-			.insert([{
-				...user,
-				created_at: new Date().toISOString(),
-				updated_at: new Date().toISOString()
-			}])
+			.insert([dbUser])
 			.select()
 			.single();
 
 		if (error) throw error;
-		return data;
+
+		// Map snake_case back to camelCase for the return value
+		if (data) {
+			return {
+				id: data.id,
+				privyId: data.privy_id,
+				walletAddress: data.wallet_address,
+				emailAddress: data.email_address,
+				username: data.username,
+				name: data.name,
+				description: data.description,
+				farcasterAddress: data.farcaster_address,
+				farcasterFid: data.farcaster_fid,
+				createdAt: new Date(data.created_at),
+				updatedAt: new Date(data.updated_at)
+			};
+		}
+		return null;
 	} catch (error) {
 		console.error('Error creating user:', error);
 		return null;

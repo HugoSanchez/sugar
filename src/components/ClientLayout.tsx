@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Providers } from '@/app/providers';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -9,7 +9,7 @@ import Header from './Header';
 import SlidingMenuLayout from './SlidingMenuLayout';
 
 interface ClientLayoutProps {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
@@ -17,6 +17,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 	const { authenticated } = useAuth();
 	const { hasProfile, isLoading } = useProfile();
 	const router = useRouter();
+	const pathname = usePathname();
+
+	useEffect(() => {
+		// Close menu when route changes
+		setIsMenuOpen(false);
+	}, [pathname]);
 
 	useEffect(() => {
 		// Only redirect if we're authenticated, have checked the profile status,
