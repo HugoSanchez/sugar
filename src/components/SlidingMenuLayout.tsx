@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 
 interface SlidingMenuLayoutProps {
 	children: React.ReactNode;
@@ -25,7 +26,7 @@ const SlidingMenuLayout = ({ children, isMenuOpen, onClose }: SlidingMenuLayoutP
 		<div className="relative min-h-screen overflow-hidden">
 			{authenticated && (
 				<div
-					className={`fixed z-20 inset-y-0 left-0 h-screen w-64 bg-gray-50 opacity-90 text-black border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
+					className={`fixed z-20 inset-y-0 left-0 h-screen w-64 bg-gray-100 text-black border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
 						isMenuOpen ? 'translate-x-0' : '-translate-x-full'
 					}`}
 				>
@@ -41,12 +42,17 @@ const SlidingMenuLayout = ({ children, isMenuOpen, onClose }: SlidingMenuLayoutP
 									profile.
 								</button>
 							</li>
+							<li><Link href="/profile" className="block p-2 rounded hover:italic">settings.</Link></li>
+
 							<li>
 								<Button
-									text="logout."
 									onClick={logout}
-									className="block p-2 rounded absolute bottom-10 text-left bg-gray-300 text-gray-800 hover:text-gray-900"
-								/>
+									variant="secondary"
+									className="absolute bottom-10 left-4 md:left-14"
+								>
+									logout
+									<LogOut className="h-4 w-4 text-gray-100" />
+								</Button>
 							</li>
 						</ul>
 					</nav>

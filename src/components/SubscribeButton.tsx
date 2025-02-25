@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { subscribeToUser, unsubscribeFromUser, isSubscribedToUser } from '@/lib/db';
+import { Check } from 'lucide-react';
 
 interface SubscribeButtonProps {
 	publisherId: string;
@@ -76,14 +77,19 @@ export function SubscribeButton({
 			disabled={isSubscribing}
 			className={`${
 				isSubscribed
-				? 'bg-gray-50 font-light opacity-50 hover:bg-gray-100'
+				? 'bg-gray-100 font-light hover:bg-gray-100'
 				: 'bg-teal-300 text-gray-800 hover:bg-teal-200'
-		} ${className}`}
+		} ${className} flex items-center gap-2`}
 		>
 		{isSubscribing
-			? 'subscribing...'
+			? '...'
 			: isSubscribed
-			? 'Unsubscribe'
+			? (
+				<>
+					Subscribed
+					<Check className="h-5 w-5 text-teal-500" />
+				</>
+			)
 			: 'Subscribe'
 		}
 		</Button>
