@@ -2,23 +2,55 @@
 
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-
-interface Section {
-  title: string;
-  content: React.ReactNode;
-}
+import { getUserByUsername } from '@/lib/db';
+import { useState, useEffect } from 'react';
+import { User } from '@/lib/types';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function ProfilePage() {
 	const { handle } = useParams();
+	const [user, setUser] = useState<User | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
 
-	const sections: Section[] = [
+	useEffect(() => {
+		async function loadUserData() {
+			if (!handle) return;
+
+			try {
+				const userData = await getUserByUsername(decodeURIComponent(handle as string));
+				setUser(userData);
+				console.log('userData', userData);
+			} catch (error) {
+				console.error('Error loading user:', error);
+			} finally {
+				setIsLoading(false);
+			}
+		}
+
+		loadUserData();
+	}, [handle]);
+
+	if (isLoading) {
+		return <Spinner />;
+	}
+
+	if (!user) {
+		return (
+			<div className="flex items-center justify-center px-4 w-full h-full">
+				<div className="text-center">
+					<h1 className="text-2xl text-gray-700 mb-2">User not found</h1>
+					<p className="text-gray-600">The user @{decodeURIComponent(handle as string)} does not exist.</p>
+				</div>
+			</div>
+		);
+	}
+
+	const sections = [
 		{
-			title: 'About me',
+			title: 'About',
 			content: (
 				<p className="text-gray-700 text-sm leading-relaxed">
-          I build products & companies in financial services, data infrastructure, crypto,
-          and various mixes of the three. Currently, I lead growth at Goldsky.
-          More about me <a href="#" className="underline">here</a>.
+					{user.description || 'No description provided.'}
 				</p>
 			)
 		},
@@ -81,13 +113,19 @@ export default function ProfilePage() {
 		<div className="w-full px-4 md:px-72 py-24">
 			{/* Profile Header - Always side by side */}
 			<div className="mb-6 flex flex-row">
-				<div className='flex flex-col w-1/4'>
-					<h1 className="text-lg font-medium leading-tight">Woj.eth</h1>
-					<h3 className="text-sm font-light text-gray-700">@{decodeURIComponent(handle as string)}</h3>
-					<p className="text-sm text-gray-400">0x2844..938h</p>
+				<div className='flex flex-col w-2/4'>
+					<h1 className="text-lg font-medium leading-tight">{user.name}</h1>
+					<h3 className="text-sm font-light text-gray-700">@{user.username}</h3>
+					{user.walletAddress && (
+						<p className="text-sm text-gray-400">
+							{user.walletAddress.slice(0, 5)}..{user.walletAddress.slice(-4)}
+						</p>
+					)}
 				</div>
-				<div className='flex w-3/4 justify-end items-center'>
-					<Button text="Subscribe" className="bg-teal-100"/>
+				<div className='flex w-2/4 justify-end items-center'>
+					<Button className="bg-teal-100 hover:bg-teal-200">
+						Subscribe
+					</Button>
 				</div>
 			</div>
 

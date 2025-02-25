@@ -6,22 +6,40 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export async function getUserByUsername(username: string): Promise<User | null> {
+// Define public fields that are safe to return to any user
+const publicUserFields = 'id, username, name, description, wallet_address, farcaster_address, farcaster_fid, created_at, updated_at';
+
+export async function getUserByUsername(username: string): Promise<Partial<User> | null> {
 	try {
 		const { data, error } = await supabase
 			.from('users')
-			.select('*')
+			.select(publicUserFields)
 			.eq('username', username)
 			.single();
 
 		if (error) throw error;
-		return data;
+
+		if (data) {
+			return {
+				id: data.id,
+				username: data.username,
+				name: data.name,
+				description: data.description,
+				walletAddress: data.wallet_address,
+				farcasterAddress: data.farcaster_address,
+				farcasterFid: data.farcaster_fid,
+				createdAt: new Date(data.created_at),
+				updatedAt: new Date(data.updated_at)
+			};
+		}
+		return null;
 	} catch (error) {
 		console.error('Error getting user by username:', error);
 		return null;
 	}
 }
 
+// This function is used for authentication, so it needs access to all fields
 export async function getUserByPrivyId(privyId: string): Promise<User | null> {
 	try {
 		const { data, error } = await supabase
@@ -32,7 +50,6 @@ export async function getUserByPrivyId(privyId: string): Promise<User | null> {
 
 		if (error) throw error;
 
-		// Map snake_case back to camelCase
 		if (data) {
 			return {
 				id: data.id,
@@ -55,16 +72,30 @@ export async function getUserByPrivyId(privyId: string): Promise<User | null> {
 	}
 }
 
-export async function getUserByWalletAddress(walletAddress: string): Promise<User | null> {
+export async function getUserByWalletAddress(walletAddress: string): Promise<Partial<User> | null> {
 	try {
 		const { data, error } = await supabase
 			.from('users')
-			.select('*')
+			.select(publicUserFields)
 			.eq('wallet_address', walletAddress)
 			.single();
 
 		if (error) throw error;
-		return data;
+
+		if (data) {
+			return {
+				id: data.id,
+				username: data.username,
+				name: data.name,
+				description: data.description,
+				walletAddress: data.wallet_address,
+				farcasterAddress: data.farcaster_address,
+				farcasterFid: data.farcaster_fid,
+				createdAt: new Date(data.created_at),
+				updatedAt: new Date(data.updated_at)
+			};
+		}
+		return null;
 	} catch (error) {
 		console.error('Error getting user by wallet address:', error);
 		return null;
