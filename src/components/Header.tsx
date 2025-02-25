@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { Menu } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/Button'
 
 interface HeaderProps {
 	onMenuClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -41,14 +40,16 @@ export default function Header({ onMenuClick }: HeaderProps) {
 				<Link href="/" className="text-xl font-bold text-primary">
 					<p className="font-medium">reverv.</p>
 				</Link>
-				<div className='flex flex-row gap-3 md:gap-6 items-center'>
+				<div className='flex flex-row '>
 					{ready && (
 						authenticated ? (
 							<button onClick={onMenuClick} className="hover:opacity-80">
 								<Menu />
 							</button>
 						) : (
-							<Button text="login." onClick={login} className='font-medium text-gray-800 hover:text-gray-900' />
+							<button onClick={login} className='text-end text-sm text-gray-800 hover:text-gray-900'>
+								<p className='text-sm'>login<span className='text-lg text-teal-400'>.</span></p>
+							</button>
 						)
 					)}
 				</div>
