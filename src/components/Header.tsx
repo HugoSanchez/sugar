@@ -37,8 +37,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
 			isScrolled ? 'shadow-md' : ''
 		}`}>
 			<div className="px-6 md:px-16 h-full flex justify-between items-center">
-				<Link href="/" className="text-xl font-bold text-primary">
-					<p className="font-medium">reverv.</p>
+				<Link href="/" className="text-primary">
+					<p className="font-medium text-base">reverv<span className='text-lg text-teal-400'>.</span></p>
 				</Link>
 				<div className='flex flex-row '>
 					{ready && (

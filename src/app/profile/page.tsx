@@ -21,20 +21,14 @@ export default function Profile() {
 		async function loadUserData() {
 			if (!user?.id) return;
 
-			try {
-				const dbUser = await getUserByPrivyId(user.id);
-				if (dbUser) {
-					setName(dbUser.name || '');
-					setUsername(dbUser.username || '');
-					setDescription(dbUser.description || '');
-				}
-			} catch (error) {
-				console.error('Error loading user data:', error);
-			}
+			// Since user is now the database user, we can use its values directly
+			setName(user.name || '');
+			setUsername(user.username || '');
+			setDescription(user.description || '');
 		}
 
 		loadUserData();
-	}, [user?.id]);
+	}, [user?.id, user?.name, user?.username, user?.description]);
 
 	const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value.toLowerCase().trim();
@@ -75,18 +69,12 @@ export default function Profile() {
 
 			// Final username check before submission
 			const existingUser = await getUserByUsername(username);
-			if (existingUser) {
+			if (existingUser && existingUser.id !== user.id) {
 				setUsernameError('Username is already taken');
 				return;
 			}
 
-			// Get the user's database record using their Privy ID
-			const dbUser = await getUserByPrivyId(user.id);
-			if (!dbUser) {
-				throw new Error('User not found in database');
-			}
-
-			await updateUser(dbUser.id, {
+			await updateUser(user.id, {
 				username,
 				name,
 				description
