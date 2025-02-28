@@ -2,6 +2,7 @@
 
 import { PrivyProvider } from '@privy-io/react-auth';
 import { ReactNode } from 'react';
+import {optimismSepolia} from 'viem/chains';
 
 export function Providers({ children, ...props }: { children: ReactNode }) {
 
@@ -14,6 +15,7 @@ export function Providers({ children, ...props }: { children: ReactNode }) {
 			appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
 			config={{
 				loginMethods: ['email'],
+				defaultChain: optimismSepolia,
 				appearance: {
 					theme: 'light',
 					accentColor: '#676FFF',

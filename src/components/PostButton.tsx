@@ -1,144 +1,108 @@
+/**
+ * PostButton Component
+ *
+ * This component handles the creation of new publications and posts on the blockchain.
+ * It manages authentication state, wallet connections, and blockchain interactions.
+ */
 import React, { useState, useCallback, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useAuth } from '@/hooks/useAuth';
+import { useSigner } from '@/hooks/useSigner';
 import { Publication } from '@/lib/types';
+import { createPublicationAndFirstPost } from '@/lib/contracts';
+import { getUserPublications } from '@/lib/db';
+import { MINIMAL_FACTORY_ADDRESS } from '@/constants';
 
-const PostButton = ({editorContent}: {editorContent: string}) => {
-	const { login, authenticated, logout, user: privyUser } = usePrivy();
-	const { user: dbUser } = useAuth();
-	const [isLoading, setIsLoading] = useState(false);
-	const [isAwaitingLogin, setIsAwaitingLogin] = useState(false);
-	const [userPublication, setUserPublication] = useState<Publication | null>(null);
+interface PostButtonProps {
+	editorContent: string;  // Content to be posted
+}
 
+const PostButton = ({ editorContent }: PostButtonProps) => {
+	// Authentication and wallet states
+	const { login, authenticated } = usePrivy();                           // Privy authentication
+	const { user: dbUser, ready: authReady } = useAuth();                 // Database user state
+	const { signer, isLoading: isBlockchainLoading } = useSigner();      // Blockchain signer
+
+	// Component state
+	const [isLoading, setIsLoading] = useState(false);                    // Loading state for post creation
+	const [userPublication, setUserPublication] = useState<Publication | null>(null);  // User's existing publication
+
+	/**
+	 * Effect: Check for user's existing publication
+	 * Runs when authentication is ready and database user is available
+	 */
 	useEffect(() => {
-		if (authenticated && privyUser?.id) {
-			checkUserPublication();
+		async function checkPublication() {
+			if (!dbUser?.id) return;
+
+			const publications = await getUserPublications(dbUser.id);
+			setUserPublication(publications[0] || null);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [authenticated, privyUser?.id]);
 
-	useEffect(() => {
-		if (isAwaitingLogin && authenticated) {
-			handlePostAfterLogin();
+		if (authReady && dbUser?.id) {
+			checkPublication();
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [authenticated, isAwaitingLogin]);
+	}, [authReady, dbUser?.id]);
 
-	// Check if user has a publication
-	const checkUserPublication = async () => {
-		try {
-			console.log('Checking user publications...');
-			console.log('Privy ID:', privyUser?.id);
-			const response = await fetch('/api/publications', {
-				headers: {
-					'x-privy-id': privyUser?.id || ''
-				}
-			});
-			const data = await response.json();
-			console.log('User publications:', data);
-
-			if (data.publications && data.publications.length > 0) {
-				setUserPublication(data.publications[0]);
-			}
-		} catch (error) {
-			console.error('Error checking user publications:', error);
-		}
-	};
-
-	const handleLogIn = useCallback(async () => {
-		await login();
-	}, [login]);
-
-	const handleLogOut = useCallback(async () => {
-		await logout();
-	}, [logout]);
-
+	/**
+	 * Handles the post creation process
+	 * 1. Ensures user is authenticated
+	 * 2. Verifies database user exists
+	 * 3. Confirms signer is available
+	 * 4. Creates new publication if needed
+	 */
 	const handlePost = useCallback(async () => {
+		// Handle authentication
 		if (!authenticated) {
-			setIsAwaitingLogin(true);
 			await login();
 			return;
 		}
-		handlePostAfterLogin();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [authenticated, editorContent]);
 
-	const handlePostAfterLogin = async () => {
+		// Check for database user
+		if (!dbUser?.id) {
+			console.log('Waiting for database user to be ready...');
+			return;
+		}
+
+		// Verify wallet/signer availability
+		if (!signer) {
+			console.log('Waiting for wallet to be ready...');
+			return;
+		}
+
 		setIsLoading(true);
-		setIsAwaitingLogin(false);
 
 		try {
-			console.log('Starting post process...');
-			console.log('Editor content:', editorContent);
-			console.log('DB User:', dbUser);
-			console.log('Privy User:', privyUser);
-			console.log('Existing publication:', userPublication);
-
-			if (!privyUser?.id) {
-				throw new Error('No authenticated user');
-			}
-
+			// Create new publication if user doesn't have one
 			if (!userPublication) {
-				// Create publication and post
-				console.log('Creating new publication and post...');
-				const response = await fetch('/api/publications', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'x-privy-id': privyUser.id
-					},
-					body: JSON.stringify({
-						publication: {
-							address: dbUser?.id || privyUser.id, // Prefer DB user ID, fallback to Privy ID
-							standard: 'ERC721',
-							network: 'ethereum'
-						},
-						post: {
-							content: editorContent,
-							tokenId: '1' // Starting with token ID 1
-						}
-					})
-				});
+				console.log('Creating new publication...');
+				const result = await createPublicationAndFirstPost(
+					'Reverv Publication',
+					'',
+					editorContent,
+					false,
+					MINIMAL_FACTORY_ADDRESS,
+					signer
+				);
 
-				const data = await response.json();
-				console.log('Publication and post created:', data);
-				setUserPublication(data.publication);
-			} else {
-				// Create post only
-				console.log('Creating new post in existing publication...');
-				const response = await fetch('/api/posts', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'x-privy-id': privyUser.id
-					},
-					body: JSON.stringify({
-						publicationId: userPublication.id,
-						publicationAddress: userPublication.address,
-						content: editorContent,
-						tokenId: String(Math.floor(Date.now() / 1000)) // Using timestamp as token ID for now
-					})
-				});
-
-				const data = await response.json();
-				console.log('Post created:', data);
+				console.log('Publication creation result:', result);
 			}
-
 		} catch (error) {
 			console.error('Error in post process:', error);
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [authenticated, login, dbUser?.id, signer, userPublication, editorContent]);
 
+	// Render post button with loading state
 	return (
 		<div className='fixed bottom-16 right-0 h-16 w-screen'>
 			<button
-				disabled={isLoading}
+				disabled={isLoading || isBlockchainLoading || !authReady}
 				onClick={handlePost}
 				className='z-20 absolute bottom-0 right-4 md:right-6 px-8 md:px-12 py-3 md:py-4 bg-gray-900 shadow-lg rounded-md hover:bg-gray-800'
 			>
-				{isLoading ? (
+				{isLoading || isBlockchainLoading ? (
 					<div className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white"/>
 				) : (
 					<p className='text-white text-base mb-1'>post.</p>

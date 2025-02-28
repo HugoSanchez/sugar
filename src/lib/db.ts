@@ -379,22 +379,16 @@ export async function getUserPublications(userId: string): Promise<Publication[]
 		const { data, error } = await supabase
 			.from('publications')
 			.select('*')
-			.eq('user_id', userId)
-			.order('created_at', { ascending: false });
+			.eq('user_id', userId);
 
-		if (error) throw error;
+		if (error) {
+			console.error('Error fetching user publications:', error);
+			return [];
+		}
 
-		return (data || []).map(pub => ({
-			id: pub.id,
-			userId: pub.user_id,
-			address: pub.address,
-			standard: pub.standard,
-			network: pub.network,
-			createdAt: new Date(pub.created_at),
-			updatedAt: new Date(pub.updated_at)
-		}));
+		return data || [];
 	} catch (error) {
-		console.error('Error getting user publications:', error);
+		console.error('Error in getUserPublications:', error);
 		return [];
 	}
 }
