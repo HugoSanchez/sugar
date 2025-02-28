@@ -24,35 +24,36 @@ const SlidingMenuLayout = ({ children, isMenuOpen, onClose }: SlidingMenuLayoutP
 
 	return (
 		<div className="relative min-h-screen overflow-hidden">
+
 			{authenticated && (
 				<div
 					className={`fixed z-20 inset-y-0 left-0 h-screen w-64 bg-white text-black border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
 						isMenuOpen ? 'translate-x-0' : '-translate-x-full'
 					}`}
 				>
-					<nav className="p-4 md:pl-14 pt-20">
-						<ul className="space-y-4">
-							<li><Link href="/read" className="block p-2 rounded hover:italic">read.</Link></li>
-							<li><Link href="/write" className="block p-2 rounded hover:italic">write.</Link></li>
+
+					<nav className="p-4 md:pl-8 pt-20">
+						<ul className="space-y-6">
+							<li><Link href="/read" className="block p-2 hover:opacity-80">read<span className="text-teal-400">.</span></Link></li>
+							<li><Link href="/write" className="block p-2 hover:opacity-80">write<span className="text-teal-400">.</span></Link></li>
 							<li>
 								<button
 									onClick={handleProfileClick}
-									className="block p-2 rounded hover:italic w-full text-left"
+									className="block p-2 hover:opacity-80 w-full text-left"
 								>
-									profile.
+									profile<span className="text-teal-400">.</span>
 								</button>
 							</li>
-							<li><Link href="/profile" className="block p-2 rounded hover:italic">settings.</Link></li>
+							<li><Link href="/profile" className="block p-2 hover:opacity-80">settings<span className="text-teal-400">.</span></Link></li>
 
-							<li>
-								<Button
+							<li className="absolute bottom-8 left-8">
+								<button
 									onClick={logout}
-									variant="secondary"
-									className="absolute bottom-10 left-4 md:left-14"
+									className="flex flex-row items-center justify-center gap-2"
 								>
 									logout
-									<LogOut className="h-4 w-4 text-gray-100" />
-								</Button>
+									<LogOut className="h-4 w-4 text-gray-700" />
+								</button>
 							</li>
 						</ul>
 					</nav>
