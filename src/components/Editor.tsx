@@ -34,9 +34,9 @@ export function RevervEditor({ onEditorChange }: { onEditorChange: (html: string
 					class: ({ level }: { level: number }) => {
 						switch (level) {
 						case 1:
-							return 'font-mono'
+							return ''
 						case 2:
-							return 'mt-8 md:mt-12 !leading-normal'
+							return ''
 						default:
 							return ''
 						}
@@ -47,7 +47,7 @@ export function RevervEditor({ onEditorChange }: { onEditorChange: (html: string
 			History,
 			Paragraph.configure({
 				HTMLAttributes: {
-					class: "!leading-loose",
+					class: "leading-loose",
 				},
 			}),
 			Blockquote,

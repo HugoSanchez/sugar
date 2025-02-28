@@ -26,7 +26,7 @@ const SlidingMenuLayout = ({ children, isMenuOpen, onClose }: SlidingMenuLayoutP
 		<div className="relative min-h-screen overflow-hidden">
 			{authenticated && (
 				<div
-					className={`fixed z-20 inset-y-0 left-0 h-screen w-64 bg-gray-100 text-black border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
+					className={`fixed z-20 inset-y-0 left-0 h-screen w-64 bg-white text-black border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
 						isMenuOpen ? 'translate-x-0' : '-translate-x-full'
 					}`}
 				>
