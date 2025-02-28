@@ -71,7 +71,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
@@ -83,18 +83,7 @@
 	@apply text-xl md:text-3xl text-gray-700 font-light;
   }
   p {
-	@apply text-base md:text-xl text-balance text-black font-light;
-  }
-}
-
-
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
+	@apply text-base text-black font-light;
   }
 }
 
