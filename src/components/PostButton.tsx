@@ -1,47 +1,49 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { usePrivy, useWallets, ConnectedWallet } from '@privy-io/react-auth';
-import { getProfileRegistryContract, getFactoryContract } from '../lib/contracts';
-import { ethers } from 'ethers';
-
-
+import { usePrivy } from '@privy-io/react-auth';
+import { useAuth } from '@/hooks/useAuth';
+import { Publication } from '@/lib/types';
 
 const PostButton = ({editorContent}: {editorContent: string}) => {
-	const { login, authenticated, logout} = usePrivy();
-	const { wallets } = useWallets();
+	const { login, authenticated, logout, user: privyUser } = usePrivy();
+	const { user: dbUser } = useAuth();
 	const [isLoading, setIsLoading] = useState(false);
 	const [isAwaitingLogin, setIsAwaitingLogin] = useState(false);
-	const [hasProfile, setHasProfile] = useState(false);
-	const [wallet, setWallet] = useState<ConnectedWallet>();
-	const [signer, setSigner] = useState<ethers.Signer>();
+	const [userPublication, setUserPublication] = useState<Publication | null>(null);
 
 	useEffect(() => {
-		if (authenticated) {
-			checkUserAndSetState();
+		if (authenticated && privyUser?.id) {
+			checkUserPublication();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	  }, [authenticated]);
-
+	}, [authenticated, privyUser?.id]);
 
 	useEffect(() => {
-	  if (isAwaitingLogin && authenticated) {
+		if (isAwaitingLogin && authenticated) {
 			handlePostAfterLogin();
-	  }
-	  // eslint-disable-next-line react-hooks/exhaustive-deps
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [authenticated, isAwaitingLogin]);
 
-	// Check if user has profile and set state
-	const checkUserAndSetState = async () => {
-		if (wallets.length === 0) return;
-		const wallet = wallets[0];
-		const provider = await wallet.getEthersProvider();
-		const signer = provider.getSigner();
-		const profileContract = getProfileRegistryContract(signer);
-		const address = await signer.getAddress();
-		const balance = await profileContract.balanceOf(address);
-		setHasProfile(balance.gt(0));
-		setSigner(signer);
-		setWallet(wallet);
-	}
+	// Check if user has a publication
+	const checkUserPublication = async () => {
+		try {
+			console.log('Checking user publications...');
+			console.log('Privy ID:', privyUser?.id);
+			const response = await fetch('/api/publications', {
+				headers: {
+					'x-privy-id': privyUser?.id || ''
+				}
+			});
+			const data = await response.json();
+			console.log('User publications:', data);
+
+			if (data.publications && data.publications.length > 0) {
+				setUserPublication(data.publications[0]);
+			}
+		} catch (error) {
+			console.error('Error checking user publications:', error);
+		}
+	};
 
 	const handleLogIn = useCallback(async () => {
 		await login();
@@ -59,71 +61,75 @@ const PostButton = ({editorContent}: {editorContent: string}) => {
 		}
 		handlePostAfterLogin();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [authenticated]);
+	}, [authenticated, editorContent]);
 
 	const handlePostAfterLogin = async () => {
-	  setIsLoading(true);
-	  setIsAwaitingLogin(false);
-	  try {
-			if (wallets.length === 0) {
-				console.error('No wallets available');
-				return;
+		setIsLoading(true);
+		setIsAwaitingLogin(false);
+
+		try {
+			console.log('Starting post process...');
+			console.log('Editor content:', editorContent);
+			console.log('DB User:', dbUser);
+			console.log('Privy User:', privyUser);
+			console.log('Existing publication:', userPublication);
+
+			if (!privyUser?.id) {
+				throw new Error('No authenticated user');
 			}
 
-			const wallet = wallets[0];
-			const provider = await wallet.getEthersProvider();
-			const signer = provider.getSigner();
+			if (!userPublication) {
+				// Create publication and post
+				console.log('Creating new publication and post...');
+				const response = await fetch('/api/publications', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'x-privy-id': privyUser.id
+					},
+					body: JSON.stringify({
+						publication: {
+							address: dbUser?.id || privyUser.id, // Prefer DB user ID, fallback to Privy ID
+							standard: 'ERC721',
+							network: 'ethereum'
+						},
+						post: {
+							content: editorContent,
+							tokenId: '1' // Starting with token ID 1
+						}
+					})
+				});
 
-
-
-			const factoryContract = getFactoryContract(signer);
-
-			if (hasProfile) {
-				await createPost(factoryContract, editorContent);
+				const data = await response.json();
+				console.log('Publication and post created:', data);
+				setUserPublication(data.publication);
 			} else {
-				await createProfileAndPost(factoryContract, editorContent);
+				// Create post only
+				console.log('Creating new post in existing publication...');
+				const response = await fetch('/api/posts', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'x-privy-id': privyUser.id
+					},
+					body: JSON.stringify({
+						publicationId: userPublication.id,
+						publicationAddress: userPublication.address,
+						content: editorContent,
+						tokenId: String(Math.floor(Date.now() / 1000)) // Using timestamp as token ID for now
+					})
+				});
+
+				const data = await response.json();
+				console.log('Post created:', data);
 			}
 
-	  } catch (error) {
+		} catch (error) {
 			console.error('Error in post process:', error);
-	  } finally {
+		} finally {
 			setIsLoading(false);
-	  }
+		}
 	};
-
-
-	// Function to create a profile and post
-	const createProfileAndPost = async (contract: ethers.Contract, editorContent: string) => {
-		console.log('Creating profile and posting...', contract);
-		console.log('Editor content:', editorContent);
-	};
-
-	// Function to create a post
-	const createPost = async (contract: ethers.Contract, editorContent: string) => {
-		console.log('Posting...', contract);
-		console.log('Editor content:', editorContent);
-	};
-
-
-	/**
-	if (!authenticated) {
-		return <button onClick={handleLogIn}>
-			<p className='text-black text-base'>login.</p>
-		</button>
-	}
-
-	if (authenticated) {
-		return <button onClick={handleLogOut}>
-			<p className='text-black text-base'>logout.</p>
-		</button>
-	}
-
-	if (isLoading) {
-		return <div>
-			<div className="animate-spin rounded-full h-3 w-3 border border-t-transparent border-black"/>
-		</div>
-	}
-	*/
 
 	return (
 		<div className='fixed bottom-16 right-0 h-16 w-screen'>
@@ -132,10 +138,13 @@ const PostButton = ({editorContent}: {editorContent: string}) => {
 				onClick={handlePost}
 				className='z-20 absolute bottom-0 right-4 md:right-6 px-8 md:px-12 py-3 md:py-4 bg-gray-900 shadow-lg rounded-md hover:bg-gray-800'
 			>
-				<p className='text-white text-base mb-1'>post.</p>
+				{isLoading ? (
+					<div className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white"/>
+				) : (
+					<p className='text-white text-base mb-1'>post.</p>
+				)}
 			</button>
 		</div>
-
 	);
 };
 

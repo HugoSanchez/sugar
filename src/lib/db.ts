@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { User, CreateUserInput } from './types';
+import { User, CreateUserInput, Publication, CreatePublicationInput, Post, CreatePostInput } from './types';
 
 // Initialize Supabase client with environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -295,6 +295,226 @@ export async function isSubscribedToUser(subscriberId: string, publisherId: stri
 	} catch (error) {
 		console.error('Error checking subscription:', error);
 		return false;
+	}
+}
+
+/**
+ * Creates a new publication for a user
+ * @param publication - The publication data to create
+ * @returns The created publication object, or null if creation failed
+ */
+export async function createPublication(publication: CreatePublicationInput): Promise<Publication | null> {
+	try {
+		const { data, error } = await supabase
+			.from('publications')
+			.insert([{
+				user_id: publication.userId,
+				address: publication.address,
+				standard: publication.standard,
+				network: publication.network
+			}])
+			.select()
+			.single();
+
+		if (error) throw error;
+
+		if (data) {
+			return {
+				id: data.id,
+				userId: data.user_id,
+				address: data.address,
+				standard: data.standard,
+				network: data.network,
+				createdAt: new Date(data.created_at),
+				updatedAt: new Date(data.updated_at)
+			};
+		}
+		return null;
+	} catch (error) {
+		console.error('Error creating publication:', error);
+		return null;
+	}
+}
+
+/**
+ * Gets a publication by its address
+ * @param address - The smart contract address of the publication
+ * @returns The publication object, or null if not found
+ */
+export async function getPublicationByAddress(address: string): Promise<Publication | null> {
+	try {
+		const { data, error } = await supabase
+			.from('publications')
+			.select('*')
+			.eq('address', address)
+			.single();
+
+		if (error) throw error;
+
+		if (data) {
+			return {
+				id: data.id,
+				userId: data.user_id,
+				address: data.address,
+				standard: data.standard,
+				network: data.network,
+				createdAt: new Date(data.created_at),
+				updatedAt: new Date(data.updated_at)
+			};
+		}
+		return null;
+	} catch (error) {
+		console.error('Error getting publication:', error);
+		return null;
+	}
+}
+
+/**
+ * Gets all publications for a user
+ * @param userId - The database ID of the user
+ * @returns Array of publication objects
+ */
+export async function getUserPublications(userId: string): Promise<Publication[]> {
+	try {
+		const { data, error } = await supabase
+			.from('publications')
+			.select('*')
+			.eq('user_id', userId)
+			.order('created_at', { ascending: false });
+
+		if (error) throw error;
+
+		return (data || []).map(pub => ({
+			id: pub.id,
+			userId: pub.user_id,
+			address: pub.address,
+			standard: pub.standard,
+			network: pub.network,
+			createdAt: new Date(pub.created_at),
+			updatedAt: new Date(pub.updated_at)
+		}));
+	} catch (error) {
+		console.error('Error getting user publications:', error);
+		return [];
+	}
+}
+
+/**
+ * Creates a new post in a publication
+ * @param post - The post data to create
+ * @returns The created post object, or null if creation failed
+ */
+export async function createPost(post: CreatePostInput): Promise<Post | null> {
+	try {
+		const { data, error } = await supabase
+			.from('posts')
+			.insert([{
+				publication_id: post.publicationId,
+				publication_address: post.publicationAddress,
+				content: post.content,
+				token_id: post.tokenId,
+				transaction_hash: post.transactionHash,
+				block_timestamp: post.blockTimestamp
+			}])
+			.select()
+			.single();
+
+		if (error) throw error;
+
+		if (data) {
+			return {
+				id: data.id,
+				publicationId: data.publication_id,
+				publicationAddress: data.publication_address,
+				content: data.content,
+				tokenId: data.token_id,
+				transactionHash: data.transaction_hash,
+				blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
+				createdAt: new Date(data.created_at),
+				updatedAt: new Date(data.updated_at)
+			};
+		}
+		return null;
+	} catch (error) {
+		console.error('Error creating post:', error);
+		return null;
+	}
+}
+
+/**
+ * Updates a post with blockchain transaction details
+ * @param postId - The database ID of the post
+ * @param transactionHash - The hash of the transaction
+ * @param blockTimestamp - The timestamp of the block
+ * @returns The updated post object, or null if update failed
+ */
+export async function updatePostTransaction(
+	postId: string,
+	transactionHash: string,
+	blockTimestamp: Date
+): Promise<Post | null> {
+	try {
+		const { data, error } = await supabase
+			.from('posts')
+			.update({
+				transaction_hash: transactionHash,
+				block_timestamp: blockTimestamp.toISOString()
+			})
+			.eq('id', postId)
+			.select()
+			.single();
+
+		if (error) throw error;
+
+		if (data) {
+			return {
+				id: data.id,
+				publicationId: data.publication_id,
+				publicationAddress: data.publication_address,
+				content: data.content,
+				tokenId: data.token_id,
+				transactionHash: data.transaction_hash,
+				blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
+				createdAt: new Date(data.created_at),
+				updatedAt: new Date(data.updated_at)
+			};
+		}
+		return null;
+	} catch (error) {
+		console.error('Error updating post transaction:', error);
+		return null;
+	}
+}
+
+/**
+ * Gets all posts for a publication
+ * @param publicationId - The database ID of the publication
+ * @returns Array of post objects
+ */
+export async function getPublicationPosts(publicationId: string): Promise<Post[]> {
+	try {
+		const { data, error } = await supabase
+			.from('posts')
+			.select('*')
+			.eq('publication_id', publicationId)
+			.order('created_at', { ascending: false });
+
+		if (error) throw error;
+
+		return (data || []).map(post => ({
+			id: post.id,
+			publicationId: post.publication_id,
+			publicationAddress: post.publication_address,
+			content: post.content,
+			tokenId: post.token_id,
+			transactionHash: post.transaction_hash,
+			blockTimestamp: post.block_timestamp ? new Date(post.block_timestamp) : undefined,
+			createdAt: new Date(post.created_at),
+			updatedAt: new Date(post.updated_at)
+		}));
+	} catch (error) {
+		console.error('Error getting publication posts:', error);
+		return [];
 	}
 }
 
