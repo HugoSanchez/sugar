@@ -29,8 +29,8 @@ export interface Post {
   id: string;
   publicationId: string;
   publicationAddress: string;
-  content: string;
-  tokenId: number;
+  content_uri: string;
+  tokenId: string;
   transactionHash?: string;
   blockTimestamp?: Date;
   createdAt: Date;

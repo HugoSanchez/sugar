@@ -405,7 +405,7 @@ export async function createPost(post: CreatePostInput): Promise<Post | null> {
 			.insert([{
 				publication_id: post.publicationId,
 				publication_address: post.publicationAddress,
-				content: post.content,
+				content_uri: post.content_uri,
 				token_id: post.tokenId,
 				transaction_hash: post.transactionHash,
 				block_timestamp: post.blockTimestamp
@@ -420,7 +420,7 @@ export async function createPost(post: CreatePostInput): Promise<Post | null> {
 				id: data.id,
 				publicationId: data.publication_id,
 				publicationAddress: data.publication_address,
-				content: data.content,
+				content_uri: data.content_uri,
 				tokenId: data.token_id,
 				transactionHash: data.transaction_hash,
 				blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
@@ -465,7 +465,7 @@ export async function updatePostTransaction(
 				id: data.id,
 				publicationId: data.publication_id,
 				publicationAddress: data.publication_address,
-				content: data.content,
+				content_uri: data.content_uri,
 				tokenId: data.token_id,
 				transactionHash: data.transaction_hash,
 				blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
@@ -495,11 +495,11 @@ export async function getPublicationPosts(publicationId: string): Promise<Post[]
 
 		if (error) throw error;
 
-		return (data || []).map(post => ({
+		return data.map(post => ({
 			id: post.id,
 			publicationId: post.publication_id,
 			publicationAddress: post.publication_address,
-			content: post.content,
+			content_uri: post.content_uri,
 			tokenId: post.token_id,
 			transactionHash: post.transaction_hash,
 			blockTimestamp: post.block_timestamp ? new Date(post.block_timestamp) : undefined,
@@ -509,6 +509,70 @@ export async function getPublicationPosts(publicationId: string): Promise<Post[]
 	} catch (error) {
 		console.error('Error getting publication posts:', error);
 		return [];
+	}
+}
+
+/**
+ * Gets all posts for a publication
+ * @param publicationId - The database ID of the publication
+ * @returns Array of post objects
+ */
+export async function getPosts(publicationId: string): Promise<Post[]> {
+	try {
+		const { data, error } = await supabase
+			.from('posts')
+			.select('*')
+			.eq('publication_id', publicationId)
+			.order('created_at', { ascending: false });
+
+		if (error) throw error;
+
+		return data.map(post => ({
+			id: post.id,
+			publicationId: post.publication_id,
+			publicationAddress: post.publication_address,
+			content_uri: post.content_uri,
+			tokenId: post.token_id,
+			transactionHash: post.transaction_hash,
+			blockTimestamp: post.block_timestamp ? new Date(post.block_timestamp) : undefined,
+			createdAt: new Date(post.created_at),
+			updatedAt: new Date(post.updated_at)
+		}));
+	} catch (error) {
+		console.error('Error getting posts:', error);
+		throw error;
+	}
+}
+
+/**
+ * Gets a post by its ID
+ * @param id - The database ID of the post
+ * @returns The post object, or null if not found
+ */
+export async function getPost(id: string): Promise<Post | null> {
+	try {
+		const { data, error } = await supabase
+			.from('posts')
+			.select('*')
+			.eq('id', id)
+			.single();
+
+		if (error) throw error;
+
+		return data ? {
+			id: data.id,
+			publicationId: data.publication_id,
+			publicationAddress: data.publication_address,
+			content_uri: data.content_uri,
+			tokenId: data.token_id,
+			transactionHash: data.transaction_hash,
+			blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
+			createdAt: new Date(data.created_at),
+			updatedAt: new Date(data.updated_at)
+		} : null;
+	} catch (error) {
+		console.error('Error getting post:', error);
+		throw error;
 	}
 }
 

@@ -5,12 +5,11 @@
  * It manages authentication state, wallet connections, and blockchain interactions.
  */
 import React, { useState, useCallback, useEffect } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useSendTransaction } from '@privy-io/react-auth';
 import { useAuth } from '@/hooks/useAuth';
-import { useSigner } from '@/hooks/useSigner';
 import { Publication } from '@/lib/types';
-import { createPublicationAndFirstPost } from '@/lib/contracts';
-import { getUserPublications } from '@/lib/db';
+import { createPublication, createPost } from '@/lib/contracts';
+import { getUserPublications, createPublication as createPublicationInDb, createPost as createPostInDb } from '@/lib/db';
 import { MINIMAL_FACTORY_ADDRESS } from '@/constants';
 
 interface PostButtonProps {
@@ -18,10 +17,10 @@ interface PostButtonProps {
 }
 
 const PostButton = ({ editorContent }: PostButtonProps) => {
-	// Authentication and wallet states
-	const { login, authenticated } = usePrivy();                           // Privy authentication
+	// Authentication and transaction states
+	const { login, authenticated, user: privyUser } = usePrivy();         // Privy authentication
 	const { user: dbUser, ready: authReady } = useAuth();                 // Database user state
-	const { signer, isLoading: isBlockchainLoading } = useSigner();      // Blockchain signer
+	const { sendTransaction } = useSendTransaction();                      // Privy transaction sender
 
 	// Component state
 	const [isLoading, setIsLoading] = useState(false);                    // Loading state for post creation
@@ -45,11 +44,36 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 	}, [authReady, dbUser?.id]);
 
 	/**
+	 * Stores a post in the database
+	 */
+	const storePost = async (
+		publicationAddress: string,
+		transactionHash: string,
+		tokenId: string,
+		publicationId: string,
+		contentUri: string
+	) => {
+		if (!publicationId) {
+			throw new Error('Publication ID is required to store post');
+		}
+
+		const post = await createPostInDb({
+			publicationId,
+			publicationAddress,
+			content_uri: contentUri,
+			tokenId,
+			transactionHash
+		});
+
+		if (!post) {
+			throw new Error('Failed to store post in database');
+		}
+
+		return post;
+	};
+
+	/**
 	 * Handles the post creation process
-	 * 1. Ensures user is authenticated
-	 * 2. Verifies database user exists
-	 * 3. Confirms signer is available
-	 * 4. Creates new publication if needed
 	 */
 	const handlePost = useCallback(async () => {
 		// Handle authentication
@@ -58,51 +82,105 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 			return;
 		}
 
-		// Check for database user
-		if (!dbUser?.id) {
-			console.log('Waiting for database user to be ready...');
-			return;
-		}
-
-		// Verify wallet/signer availability
-		if (!signer) {
-			console.log('Waiting for wallet to be ready...');
+		// Check for database user and wallet address
+		if (!dbUser?.id || !privyUser?.wallet?.address) {
+			console.log('Waiting for database user and wallet to be ready...');
 			return;
 		}
 
 		setIsLoading(true);
 
 		try {
+			let result;
+
 			// Create new publication if user doesn't have one
 			if (!userPublication) {
 				console.log('Creating new publication...');
-				const result = await createPublicationAndFirstPost(
-					'Reverv Publication',
-					'',
+
+				// Create the publication on-chain
+				result = await createPublication(
 					editorContent,
-					false,
 					MINIMAL_FACTORY_ADDRESS,
-					signer
+					sendTransaction
 				);
 
-				console.log('Publication creation result:', result);
+				console.log('Publication created:', result);
+
+				// Handle any errors from the contract interaction
+				if (result.error || !result.publicationAddress || !result.transactionHash || !result.tokenId || !result.contentUri) {
+					throw new Error(result.error || 'Failed to create publication');
+				}
+
+				// Store the publication in the database
+				const newPublication = await createPublicationInDb({
+					userId: dbUser.id,
+					address: result.publicationAddress,
+					standard: 'ERC1155',
+					network: 'optimism-sepolia'
+				});
+
+				if (!newPublication) {
+					throw new Error('Failed to store publication in database');
+				}
+
+				// Update local state
+				setUserPublication(newPublication);
+				console.log('Publication stored in database:', newPublication);
+
+				// Store the first post with the new publication ID
+				await storePost(
+					result.publicationAddress,
+					result.transactionHash,
+					result.tokenId,
+					newPublication.id,
+					result.contentUri
+				);
+			} else {
+				console.log('Creating new post in existing publication...');
+
+				// Create post in existing publication
+				result = await createPost(
+					editorContent,
+					userPublication.address,
+					sendTransaction,
+					privyUser.wallet.address
+				);
+
+				console.log('Post created:', result);
+
+				// Handle any errors from the contract interaction
+				if (result.error || !result.transactionHash || !result.tokenId || !result.contentUri) {
+					throw new Error(result.error || 'Failed to create post');
+				}
+				console.log('Post created:', result);
+
+				// Store the post in the database with the existing publication ID
+				await storePost(
+					userPublication.address,
+					result.transactionHash,
+					result.tokenId,
+					userPublication.id,
+					result.contentUri
+				);
 			}
+
+			console.log('Post created successfully');
 		} catch (error) {
 			console.error('Error in post process:', error);
 		} finally {
 			setIsLoading(false);
 		}
-	}, [authenticated, login, dbUser?.id, signer, userPublication, editorContent]);
+	}, [authenticated, login, dbUser?.id, userPublication, privyUser?.wallet?.address, editorContent, sendTransaction]);
 
 	// Render post button with loading state
 	return (
 		<div className='fixed bottom-16 right-0 h-16 w-screen'>
 			<button
-				disabled={isLoading || isBlockchainLoading || !authReady}
+				disabled={isLoading || !authReady}
 				onClick={handlePost}
 				className='z-20 absolute bottom-0 right-4 md:right-6 px-8 md:px-12 py-3 md:py-4 bg-gray-900 shadow-lg rounded-md hover:bg-gray-800'
 			>
-				{isLoading || isBlockchainLoading ? (
+				{isLoading ? (
 					<div className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white"/>
 				) : (
 					<p className='text-white text-base mb-1'>post.</p>
