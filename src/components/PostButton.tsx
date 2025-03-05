@@ -11,6 +11,7 @@ import { Publication } from '@/lib/types';
 import { createPublication, createPost } from '@/lib/contracts';
 import { getUserPublications, createPublication as createPublicationInDb, createPost as createPostInDb } from '@/lib/db';
 import { MINIMAL_FACTORY_ADDRESS } from '@/constants';
+import { useRouter } from 'next/navigation';
 
 interface PostButtonProps {
 	editorContent: string;  // Content to be posted
@@ -21,6 +22,7 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 	const { login, authenticated, user: privyUser } = usePrivy();         // Privy authentication
 	const { user: dbUser, ready: authReady } = useAuth();                 // Database user state
 	const { sendTransaction } = useSendTransaction();                      // Privy transaction sender
+	const router = useRouter();
 
 	// Component state
 	const [isLoading, setIsLoading] = useState(false);                    // Loading state for post creation
@@ -51,7 +53,8 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 		transactionHash: string,
 		tokenId: string,
 		publicationId: string,
-		contentUri: string
+		contentUri: string,
+		content: string
 	) => {
 		if (!publicationId) {
 			throw new Error('Publication ID is required to store post');
@@ -61,6 +64,7 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 			publicationId,
 			publicationAddress,
 			content_uri: contentUri,
+			content,
 			tokenId,
 			transactionHash
 		});
@@ -92,6 +96,7 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 
 		try {
 			let result;
+			let storedPost;
 
 			// Create new publication if user doesn't have one
 			if (!userPublication) {
@@ -128,12 +133,13 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 				console.log('Publication stored in database:', newPublication);
 
 				// Store the first post with the new publication ID
-				await storePost(
+				storedPost = await storePost(
 					result.publicationAddress,
 					result.transactionHash,
 					result.tokenId,
 					newPublication.id,
-					result.contentUri
+					result.contentUri,
+					editorContent
 				);
 			} else {
 				console.log('Creating new post in existing publication...');
@@ -152,25 +158,30 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 				if (result.error || !result.transactionHash || !result.tokenId || !result.contentUri) {
 					throw new Error(result.error || 'Failed to create post');
 				}
-				console.log('Post created:', result);
 
 				// Store the post in the database with the existing publication ID
-				await storePost(
+				storedPost = await storePost(
 					userPublication.address,
 					result.transactionHash,
 					result.tokenId,
 					userPublication.id,
-					result.contentUri
+					result.contentUri,
+					editorContent
 				);
 			}
 
 			console.log('Post created successfully');
+
+			// Redirect to the post page using the user's handle and tokenId
+			if (storedPost && dbUser.username) {
+				router.push(`/${dbUser.username}/${result.tokenId}`);
+			}
 		} catch (error) {
 			console.error('Error in post process:', error);
 		} finally {
 			setIsLoading(false);
 		}
-	}, [authenticated, login, dbUser?.id, userPublication, privyUser?.wallet?.address, editorContent, sendTransaction]);
+	}, [authenticated, login, dbUser?.id, dbUser?.username, userPublication, privyUser?.wallet?.address, editorContent, sendTransaction, router]);
 
 	// Render post button with loading state
 	return (

@@ -406,6 +406,7 @@ export async function createPost(post: CreatePostInput): Promise<Post | null> {
 				publication_id: post.publicationId,
 				publication_address: post.publicationAddress,
 				content_uri: post.content_uri,
+				content: post.content,
 				token_id: post.tokenId,
 				transaction_hash: post.transactionHash,
 				block_timestamp: post.blockTimestamp
@@ -421,6 +422,7 @@ export async function createPost(post: CreatePostInput): Promise<Post | null> {
 				publicationId: data.publication_id,
 				publicationAddress: data.publication_address,
 				content_uri: data.content_uri,
+				content: data.content,
 				tokenId: data.token_id,
 				transactionHash: data.transaction_hash,
 				blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
@@ -466,6 +468,7 @@ export async function updatePostTransaction(
 				publicationId: data.publication_id,
 				publicationAddress: data.publication_address,
 				content_uri: data.content_uri,
+				content: data.content,
 				tokenId: data.token_id,
 				transactionHash: data.transaction_hash,
 				blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
@@ -500,6 +503,7 @@ export async function getPublicationPosts(publicationId: string): Promise<Post[]
 			publicationId: post.publication_id,
 			publicationAddress: post.publication_address,
 			content_uri: post.content_uri,
+			content: post.content,
 			tokenId: post.token_id,
 			transactionHash: post.transaction_hash,
 			blockTimestamp: post.block_timestamp ? new Date(post.block_timestamp) : undefined,
@@ -532,6 +536,7 @@ export async function getPosts(publicationId: string): Promise<Post[]> {
 			publicationId: post.publication_id,
 			publicationAddress: post.publication_address,
 			content_uri: post.content_uri,
+			content: post.content,
 			tokenId: post.token_id,
 			transactionHash: post.transaction_hash,
 			blockTimestamp: post.block_timestamp ? new Date(post.block_timestamp) : undefined,
@@ -545,11 +550,11 @@ export async function getPosts(publicationId: string): Promise<Post[]> {
 }
 
 /**
- * Gets a post by its ID
+ * Gets a post by its database ID
  * @param id - The database ID of the post
  * @returns The post object, or null if not found
  */
-export async function getPost(id: string): Promise<Post | null> {
+export async function getPostById(id: string): Promise<Post | null> {
 	try {
 		const { data, error } = await supabase
 			.from('posts')
@@ -564,6 +569,7 @@ export async function getPost(id: string): Promise<Post | null> {
 			publicationId: data.publication_id,
 			publicationAddress: data.publication_address,
 			content_uri: data.content_uri,
+			content: data.content,
 			tokenId: data.token_id,
 			transactionHash: data.transaction_hash,
 			blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
@@ -571,7 +577,46 @@ export async function getPost(id: string): Promise<Post | null> {
 			updatedAt: new Date(data.updated_at)
 		} : null;
 	} catch (error) {
-		console.error('Error getting post:', error);
+		console.error('Error getting post by id:', error);
+		throw error;
+	}
+}
+
+/**
+ * Gets a post by its token ID
+ * @param tokenId - The token ID from the blockchain
+ * @param publicationAddress - Optional publication address to scope the search
+ * @returns The post object, or null if not found
+ */
+export async function getPost(tokenId: string, publicationAddress?: string): Promise<Post | null> {
+	try {
+		let query = supabase
+			.from('posts')
+			.select('*')
+			.eq('token_id', tokenId);
+
+		if (publicationAddress) {
+			query = query.eq('publication_address', publicationAddress);
+		}
+
+		const { data, error } = await query.single();
+
+		if (error) throw error;
+
+		return data ? {
+			id: data.id,
+			publicationId: data.publication_id,
+			publicationAddress: data.publication_address,
+			content_uri: data.content_uri,
+			content: data.content,
+			tokenId: data.token_id,
+			transactionHash: data.transaction_hash,
+			blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
+			createdAt: new Date(data.created_at),
+			updatedAt: new Date(data.updated_at)
+		} : null;
+	} catch (error) {
+		console.error('Error getting post by token ID:', error);
 		throw error;
 	}
 }

@@ -30,6 +30,7 @@ export interface Post {
   publicationId: string;
   publicationAddress: string;
   content_uri: string;
+  content: string;  // The actual JSON content from the editor
   tokenId: string;
   transactionHash?: string;
   blockTimestamp?: Date;

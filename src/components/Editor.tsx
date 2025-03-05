@@ -1,7 +1,6 @@
 import EditorMenu from './EditorMenu';
-import PostButton from './PostButton';
-
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { JSONContent } from '@tiptap/react';
 import Heading from "@tiptap/extension-heading";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -16,9 +15,15 @@ import Code from "@tiptap/extension-code";
 import History from "@tiptap/extension-history";
 import Placeholder from '@tiptap/extension-placeholder'
 
+interface RevervEditorProps {
+	onEditorChange: (content: string) => void;
+	initialContent?: string;
+	readOnly?: boolean;
+}
 
-export function RevervEditor({ onEditorChange }: { onEditorChange: (html: string) => void }) {
+export function RevervEditor({ onEditorChange, initialContent, readOnly = false }: RevervEditorProps) {
 	const editor = useEditor({
+		editable: !readOnly,
 		editorProps: {
 			attributes: {
 				class: 'tiptap prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none',
@@ -26,7 +31,7 @@ export function RevervEditor({ onEditorChange }: { onEditorChange: (html: string
 		},
 		extensions: [
 			Placeholder.configure({
-				placeholder: `Here's your editor. You're one click away from posting onchain. Go ahead, type something!`,
+				placeholder: readOnly ? '' : `Here's your editor. You're one click away from posting onchain. Go ahead, type something!`,
 			}),
 			Heading.configure({
 				levels: [1, 2, 3],
@@ -61,11 +66,12 @@ export function RevervEditor({ onEditorChange }: { onEditorChange: (html: string
 			Strike,
 			Code,
 		],
-		content: '',
+		content: initialContent ? JSON.parse(initialContent) : '',
 		onUpdate: ({ editor }) => {
-			onEditorChange(editor.getHTML());
+			const json = editor.getJSON();
+			onEditorChange(JSON.stringify(json));
 		},
-	}) as Editor;
+	});
 
 	if (!editor) {
 		return null;
@@ -75,8 +81,7 @@ export function RevervEditor({ onEditorChange }: { onEditorChange: (html: string
 		<>
 			<div className="">
 				<div className="mt-14 pb-20 md:mt-0">
-					<PostButton editorContent={editor.getHTML()}/>
-					<EditorMenu editor={editor} />
+					{!readOnly && <EditorMenu editor={editor} />}
 					<EditorContent editor={editor} />
 				</div>
 			</div>
