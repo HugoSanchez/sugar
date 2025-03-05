@@ -26,7 +26,7 @@ export function RevervEditor({ onEditorChange, initialContent, readOnly = false 
 		editable: !readOnly,
 		editorProps: {
 			attributes: {
-				class: 'tiptap prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none',
+				class: 'tiptap prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none [&>*:first-child]:mt-0',
 			},
 		},
 		extensions: [
@@ -39,11 +39,11 @@ export function RevervEditor({ onEditorChange, initialContent, readOnly = false 
 					class: ({ level }: { level: number }) => {
 						switch (level) {
 						case 1:
-							return ''
+							return 'mt-0'
 						case 2:
-							return ''
+							return 'mt-0'
 						default:
-							return ''
+							return 'mt-0'
 						}
 					}
 				},
@@ -52,7 +52,7 @@ export function RevervEditor({ onEditorChange, initialContent, readOnly = false 
 			History,
 			Paragraph.configure({
 				HTMLAttributes: {
-					class: "leading-loose",
+					class: "leading-loose mt-0",
 				},
 			}),
 			Blockquote,
@@ -80,10 +80,8 @@ export function RevervEditor({ onEditorChange, initialContent, readOnly = false 
 	return (
 		<>
 			<div className="">
-				<div className="mt-14 pb-20 md:mt-0">
-					{!readOnly && <EditorMenu editor={editor} />}
-					<EditorContent editor={editor} />
-				</div>
+				{!readOnly && <EditorMenu editor={editor} />}
+				<EditorContent editor={editor} />
 			</div>
 		</>
 	);
