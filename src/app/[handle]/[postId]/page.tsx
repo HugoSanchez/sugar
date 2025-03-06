@@ -6,6 +6,8 @@ import { getUserByUsername, getPost, getUserPublications } from '@/lib/db';
 import { Post, User } from '@/lib/types';
 import { Spinner } from '@/components/ui/spinner';
 import { RevervEditor } from '@/components/Editor';
+import { Copy, Check } from 'lucide-react';
+import { publicActions } from 'viem';
 
 interface ParsedContent {
 	header: {
@@ -24,6 +26,7 @@ export default function PostPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [parsedContent, setParsedContent] = useState<ParsedContent>({ header: null, body: null });
+	const [hasCopied, setHasCopied] = useState(false);
 
 	useEffect(() => {
 		async function loadPost() {
@@ -135,6 +138,18 @@ export default function PostPage() {
 		loadPost();
 	}, [handle, tokenId]);
 
+	const handleShare = async () => {
+		try {
+			await navigator.clipboard.writeText(window.location.href);
+			setHasCopied(true);
+			setTimeout(() => {
+				setHasCopied(false);
+			}, 3000);
+		} catch (err) {
+			console.error('Failed to copy URL:', err);
+		}
+	};
+
 	if (isLoading) {
 		return <Spinner />;
 	}
@@ -155,7 +170,7 @@ export default function PostPage() {
 			{/* Title */}
 			{parsedContent.header && (
 				<div>
-					<div className="mb-2">
+					<div className="mb-3">
 						<RevervEditor
 							initialContent={parsedContent.header.title}
 							readOnly={true}
@@ -165,7 +180,7 @@ export default function PostPage() {
 
 					{/* Subtitle */}
 					{parsedContent.header.subtitle && (
-						<div className="mb-4">
+						<div className="mb-3">
 							<RevervEditor
 								initialContent={parsedContent.header.subtitle}
 								readOnly={true}
@@ -177,9 +192,31 @@ export default function PostPage() {
 			)}
 
 			{/* Author info */}
-			<div className="my-4">
-				<p className="text-base font-medium text-gray-800">{author.name}</p>
-				<p className="text-sm text-gray-600">@{author.username}</p>
+			<div className="my-4 pr-4 md:pr-8 flex flex-row items-center justify-between">
+				<div className="flex flex-col">
+					<p className="text-base font-medium text-gray-800">{author.name}</p>
+					<p className="text-sm text-gray-600">@{author.username}</p>
+				</div>
+
+				<div className="flex items-center gap-3">
+					<button
+						onClick={handleShare}
+						className={`w-10 h-10 rounded-full transition-colors flex items-center justify-center bg-gray-100 opacity-90'
+						}`}
+						title="Copy link to clipboard"
+					>
+						{hasCopied ? (
+							<Check className="h-4 w-4 text-gray-500" />
+						) : (
+							<Copy className="h-4 w-4 text-gray-500" />
+						)}
+					</button>
+					<button
+						className="px-4 py-2 rounded-full text-sm text-gray-600 bg-teal-200 hover:bg-teal-200"
+					>
+						Collect
+					</button>
+				</div>
 			</div>
 
 			{/* Body content */}
@@ -189,6 +226,15 @@ export default function PostPage() {
 					readOnly={true}
 					onEditorChange={() => {}}
 				/>
+			</div>
+
+			{/* Footer */}
+			<div className="mt-8">
+				<p className="text-xs italic text-gray-600">
+					Posted to Ethereum on {new Date(post.createdAt).toLocaleDateString()}
+				</p>
+				<p className="text-xs italic text-gray-600">Transaction index: {post?.transactionHash?.slice(0, 8)}</p>
+				<p className="text-xs italic text-gray-600">User address: {author.walletAddress?.slice(0,8)}</p>
 			</div>
 		</div>
 	);
