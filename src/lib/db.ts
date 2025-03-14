@@ -407,6 +407,7 @@ export async function createPost(post: CreatePostInput): Promise<Post | null> {
 				publication_address: post.publicationAddress,
 				content_uri: post.content_uri,
 				content: post.content,
+				title: post.title,
 				token_id: post.tokenId,
 				transaction_hash: post.transactionHash,
 				block_timestamp: post.blockTimestamp
@@ -423,6 +424,7 @@ export async function createPost(post: CreatePostInput): Promise<Post | null> {
 				publicationAddress: data.publication_address,
 				content_uri: data.content_uri,
 				content: data.content,
+				title: data.title,
 				tokenId: data.token_id,
 				transactionHash: data.transaction_hash,
 				blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
@@ -469,6 +471,7 @@ export async function updatePostTransaction(
 				publicationAddress: data.publication_address,
 				content_uri: data.content_uri,
 				content: data.content,
+				title: data.title,
 				tokenId: data.token_id,
 				transactionHash: data.transaction_hash,
 				blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
@@ -504,6 +507,7 @@ export async function getPublicationPosts(publicationId: string): Promise<Post[]
 			publicationAddress: post.publication_address,
 			content_uri: post.content_uri,
 			content: post.content,
+			title: post.title,
 			tokenId: post.token_id,
 			transactionHash: post.transaction_hash,
 			blockTimestamp: post.block_timestamp ? new Date(post.block_timestamp) : undefined,
@@ -537,6 +541,7 @@ export async function getPosts(publicationId: string): Promise<Post[]> {
 			publicationAddress: post.publication_address,
 			content_uri: post.content_uri,
 			content: post.content,
+			title: post.title,
 			tokenId: post.token_id,
 			transactionHash: post.transaction_hash,
 			blockTimestamp: post.block_timestamp ? new Date(post.block_timestamp) : undefined,
@@ -570,6 +575,7 @@ export async function getPostById(id: string): Promise<Post | null> {
 			publicationAddress: data.publication_address,
 			content_uri: data.content_uri,
 			content: data.content,
+			title: data.title,
 			tokenId: data.token_id,
 			transactionHash: data.transaction_hash,
 			blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
@@ -609,6 +615,7 @@ export async function getPost(tokenId: string, publicationAddress?: string): Pro
 			publicationAddress: data.publication_address,
 			content_uri: data.content_uri,
 			content: data.content,
+			title: data.title,
 			tokenId: data.token_id,
 			transactionHash: data.transaction_hash,
 			blockTimestamp: data.block_timestamp ? new Date(data.block_timestamp) : undefined,
@@ -626,51 +633,22 @@ export async function getPost(tokenId: string, publicationAddress?: string): Pro
  * @param bookmark - The bookmark data to create
  * @returns The created bookmark object, or null if creation failed
  */
-export async function createBookmark(bookmark: CreateBookmarkInput): Promise<Bookmark | null> {
+export async function createBookmark(input: CreateBookmarkInput): Promise<Bookmark | null> {
 	try {
-		console.log('Creating bookmark with data:', bookmark);
-
 		const { data, error } = await supabase
 			.from('bookmarks')
-			.insert([{
-				user_id: bookmark.userId,
-				publication_address: bookmark.publicationAddress,
-				token_id: bookmark.tokenId,
-				transaction_hash: bookmark.transactionHash
-			}])
+			.insert([input])
 			.select()
 			.single();
 
 		if (error) {
-			console.error('Supabase error creating bookmark:', error);
-			throw error;
+			console.error('Error creating bookmark:', error);
+			return null;
 		}
 
-		console.log('Supabase response data:', data);
-
-		if (data) {
-			const formattedBookmark = {
-				id: data.id,
-				userId: data.user_id,
-				publicationAddress: data.publication_address,
-				tokenId: data.token_id,
-				transactionHash: data.transaction_hash,
-				createdAt: new Date(data.created_at),
-				updatedAt: new Date(data.updated_at)
-			};
-			console.log('Formatted bookmark:', formattedBookmark);
-			return formattedBookmark;
-		}
-		return null;
+		return data as Bookmark;
 	} catch (error) {
-		console.error('Error creating bookmark:', error);
-		if (error instanceof Error) {
-			console.error('Error details:', {
-				name: error.name,
-				message: error.message,
-				stack: error.stack
-			});
-		}
+		console.error('Error in createBookmark:', error);
 		return null;
 	}
 }
@@ -682,11 +660,7 @@ export async function createBookmark(bookmark: CreateBookmarkInput): Promise<Boo
  * @param tokenId - The token ID of the post
  * @returns Boolean indicating if the bookmark exists
  */
-export async function hasBookmarked(
-	userId: string,
-	publicationAddress: string,
-	tokenId: string
-): Promise<boolean> {
+export async function hasBookmarked(userId: string, publicationAddress: string, tokenId: string): Promise<boolean> {
 	try {
 		const { data, error } = await supabase
 			.from('bookmarks')
@@ -696,13 +670,18 @@ export async function hasBookmarked(
 			.eq('token_id', tokenId)
 			.single();
 
-		if (error && error.code !== 'PGRST116') { // PGRST116 is the "not found" error code
-			throw error;
+		if (error) {
+			if (error.code === 'PGRST116') {
+				// No bookmark found
+				return false;
+			}
+			console.error('Error checking bookmark:', error);
+			return false;
 		}
 
 		return !!data;
 	} catch (error) {
-		console.error('Error checking bookmark:', error);
+		console.error('Error in hasBookmarked:', error);
 		return false;
 	}
 }

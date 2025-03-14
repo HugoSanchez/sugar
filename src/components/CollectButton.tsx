@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { collectPost } from '@/lib/contracts';
-import { createBookmark } from '@/lib/db';
-import { Bookmark } from 'lucide-react';
+import { createBookmark, hasBookmarked } from '@/lib/db';
+import { Bookmark, Check } from 'lucide-react';
 import { UnsignedTransactionRequest, SendTransactionModalUIOptions } from '@privy-io/react-auth';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -24,27 +24,31 @@ interface TransactionResponse {
 
 export default function CollectButton({ publicationAddress, tokenId, variant = 'default' }: CollectButtonProps) {
 	const [isCollecting, setIsCollecting] = useState(false);
+	const [isBookmarked, setIsBookmarked] = useState(false);
 	const { login, authenticated, sendTransaction, user } = usePrivy();
 	const { user: dbUser } = useAuth();
 
+	useEffect(() => {
+		async function checkBookmarkStatus() {
+			if (dbUser?.id) {
+				const bookmarked = await hasBookmarked(dbUser.id, publicationAddress, tokenId);
+				setIsBookmarked(bookmarked);
+			}
+		}
+
+		checkBookmarkStatus();
+	}, [dbUser?.id, publicationAddress, tokenId]);
+
 	const handleCollect = async () => {
-		console.log('Starting collect process...');
-		console.log('Publication Address:', publicationAddress);
-		console.log('Token ID:', tokenId);
-		console.log('Authentication status:', authenticated);
+		if (isBookmarked) return;
 
 		if (!authenticated || !user?.wallet?.address || !dbUser?.id) {
-			console.log('User not authenticated or wallet not available, triggering login...');
 			login();
 			return;
 		}
 
 		setIsCollecting(true);
 		try {
-			console.log('Creating collect transaction...');
-			console.log('User wallet address:', user.wallet.address);
-
-			// Create a wrapper function that converts the Privy transaction receipt to our expected format
 			const wrappedSendTransaction = async (
 				request: UnsignedTransactionRequest,
 				uiConfig?: SendTransactionModalUIOptions
@@ -63,20 +67,11 @@ export default function CollectButton({ publicationAddress, tokenId, variant = '
 				wrappedSendTransaction,
 				user.wallet.address
 			);
-			console.log('Collect transaction result:', result);
 
 			if (result.status !== 1) {
 				console.error('Transaction failed with status:', result.status);
 				// TODO: Add error toast notification
 			} else {
-				// Store the bookmark in the database
-				console.log('Attempting to store bookmark with data:', {
-					userId: dbUser.id,
-					publicationAddress,
-					tokenId,
-					transactionHash: result.transactionHash
-				});
-
 				try {
 					const bookmark = await createBookmark({
 						userId: dbUser.id,
@@ -86,22 +81,20 @@ export default function CollectButton({ publicationAddress, tokenId, variant = '
 					});
 
 					if (bookmark) {
-						console.log('Successfully stored bookmark:', bookmark);
+						setIsBookmarked(true);
 					} else {
-						console.error('Failed to store bookmark in database - returned null');
+						console.error('Failed to store bookmark in database');
 					}
 				} catch (error) {
 					console.error('Error storing bookmark:', error);
 					if (error instanceof Error) {
-						console.error('Bookmark error details:', {
+						console.error('Error details:', {
 							name: error.name,
 							message: error.message,
 							stack: error.stack
 						});
 					}
 				}
-
-				console.log('Successfully collected post:', result.transactionHash);
 				// TODO: Add success toast notification
 			}
 		} catch (error: unknown) {
@@ -123,12 +116,18 @@ export default function CollectButton({ publicationAddress, tokenId, variant = '
 		return (
 			<button
 				onClick={handleCollect}
-				disabled={isCollecting}
-				className="w-10 h-10 rounded-full transition-colors flex items-center justify-center bg-gray-100 opacity-90 hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
-				title="Bookmark this post"
+				disabled={isCollecting || isBookmarked}
+				className={`w-10 h-10 rounded-full transition-colors flex items-center justify-center ${
+					isBookmarked
+						? 'bg-gray-100 cursor-default'
+						: 'bg-gray-100 opacity-90 hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed'
+				}`}
+				title={isBookmarked ? "Already bookmarked" : "Bookmark this post"}
 			>
 				{isCollecting ? (
 					<div className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-gray-500"/>
+				) : isBookmarked ? (
+					<Check className="h-4 w-4 text-teal-500" />
 				) : (
 					<Bookmark className="h-4 w-4 text-gray-500" />
 				)}
@@ -139,11 +138,24 @@ export default function CollectButton({ publicationAddress, tokenId, variant = '
 	return (
 		<button
 			onClick={handleCollect}
-			disabled={isCollecting}
-			className="px-6 py-2 rounded-full text-sm text-gray-700 bg-teal-200 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+			disabled={isCollecting || isBookmarked}
+			className={`px-6 py-2 rounded-full text-sm flex items-center gap-2 ${
+				isBookmarked
+					? 'bg-gray-100 text-gray-700 cursor-default'
+					: 'bg-teal-200 text-gray-700 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed'
+			}`}
 		>
-			<Bookmark className="h-4 w-4" />
-			{isCollecting ? "Bookmarking..." : "bookmark."}
+			{isBookmarked ? (
+				<>
+					<Check className="h-4 w-4 text-teal-500" />
+					bookmarked.
+				</>
+			) : (
+				<>
+					<Bookmark className="h-4 w-4" />
+					{isCollecting ? "bookmarking..." : "bookmark."}
+				</>
+			)}
 		</button>
 	);
 }

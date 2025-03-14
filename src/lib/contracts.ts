@@ -64,8 +64,6 @@ function parsePostCreatedEvent(logs: TransactionLog[]) {
 		postLog.topics
 	);
 
-	console.log('Decoded data:', decodedData);
-
 	return {
 		tokenId: ethers.BigNumber.from(decodedData.id).toString(),
 		metadataURI: decodedData.metadataURI,
@@ -114,7 +112,6 @@ export async function createPublication(
 		// Send the transaction
 		// This is the function that Privy uses to interact with the blockchain
 		const result = await sendTransaction(txRequest, uiConfig);
-		console.log('Transaction result:', result);
 
 		// Check transaction status
 		if (result.status !== 1) {
@@ -180,7 +177,6 @@ export async function createPost(
 
 		// Send the transaction
 		const result = await sendTransaction(txRequest, uiConfig);
-		console.log('Transaction result:', result);
 
 		// Check transaction status
 		if (result.status !== 1) {

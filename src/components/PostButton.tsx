@@ -17,6 +17,28 @@ interface PostButtonProps {
 	editorContent: string;  // Content to be posted
 }
 
+/**
+ * Extracts the title from the editor content if it exists
+ * @param content JSON string of editor content
+ * @returns The title text or null if no title found
+ */
+function extractTitle(content: string): string | null {
+	try {
+		const parsedContent = JSON.parse(content);
+		const titleNode = parsedContent.content.find((node: any) =>
+			node.type === 'heading' && node.attrs?.level === 1
+		);
+
+		if (titleNode && titleNode.content && titleNode.content[0]) {
+			return titleNode.content[0].text || null;
+		}
+		return null;
+	} catch (error) {
+		console.error('Error extracting title:', error);
+		return null;
+	}
+}
+
 const PostButton = ({ editorContent }: PostButtonProps) => {
 	// Authentication and transaction states
 	const { login, authenticated, user: privyUser } = usePrivy();         // Privy authentication
@@ -54,7 +76,8 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 		tokenId: string,
 		publicationId: string,
 		contentUri: string,
-		content: string
+		content: string,
+		title: string | null
 	) => {
 		if (!publicationId) {
 			throw new Error('Publication ID is required to store post');
@@ -65,6 +88,7 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 			publicationAddress,
 			content_uri: contentUri,
 			content,
+			title,
 			tokenId,
 			transactionHash
 		});
@@ -97,6 +121,7 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 		try {
 			let result;
 			let storedPost;
+			const extractedTitle = extractTitle(editorContent);
 
 			// Create new publication if user doesn't have one
 			if (!userPublication) {
@@ -139,7 +164,8 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 					result.tokenId,
 					newPublication.id,
 					result.contentUri,
-					editorContent
+					editorContent,
+					extractedTitle
 				);
 			} else {
 				console.log('Creating new post in existing publication...');
@@ -166,7 +192,8 @@ const PostButton = ({ editorContent }: PostButtonProps) => {
 					result.tokenId,
 					userPublication.id,
 					result.contentUri,
-					editorContent
+					editorContent,
+					extractedTitle
 				);
 			}
 
