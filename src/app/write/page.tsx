@@ -18,7 +18,7 @@ export default function Write() {
 	return (
 		<>
 			<div className='flex flex-col py-10 md:py-32 px-2 md:px-80 '>
-				<RevervEditor onEditorChange={handleEditorChange} />
+				<RevervEditor onEditorChange={handleEditorChange} showMenu={true} />
 				<PostButton editorContent={editorContent} />
 			</div>
 		</>

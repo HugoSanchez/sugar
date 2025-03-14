@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { RevervEditor } from '@/components/Editor';
 import { Copy, Check } from 'lucide-react';
 import { publicActions } from 'viem';
+import CollectButton from '@/components/CollectButton';
 
 interface ParsedContent {
 	header: {
@@ -166,7 +167,7 @@ export default function PostPage() {
 	}
 
 	return (
-		<div className="flex flex-col mt-16 py-10 md:py-32 px-2 md:px-80">
+		<div className="flex flex-col mt-16 px-2 md:mt-12 md:px-80">
 			{/* Title */}
 			{parsedContent.header && (
 				<div>
@@ -211,11 +212,8 @@ export default function PostPage() {
 							<Copy className="h-4 w-4 text-gray-500" />
 						)}
 					</button>
-					<button
-						className="px-4 py-2 rounded-full text-sm text-gray-600 bg-teal-200 hover:bg-teal-200"
-					>
-						Collect
-					</button>
+					<CollectButton publicationAddress={post.publicationAddress} tokenId={post.tokenId} variant="icon" />
+
 				</div>
 			</div>
 
@@ -229,13 +227,41 @@ export default function PostPage() {
 			</div>
 
 			{/* Footer */}
-			<div className="mt-8">
-				<p className="text-xs italic text-gray-600">
+			<div className="mt-10">
+				<p className="text-xs italic text-gray-800 font-medium">
 					Posted to Ethereum on {new Date(post.createdAt).toLocaleDateString()}
 				</p>
-				<p className="text-xs italic text-gray-600">Transaction index: {post?.transactionHash?.slice(0, 8)}</p>
-				<p className="text-xs italic text-gray-600">User address: {author.walletAddress?.slice(0,8)}</p>
+				<p className="text-xs italic text-gray-600">
+					Transaction: {' '}
+					<a
+						href={`https://sepolia-optimism.etherscan.io/tx/${post.transactionHash}`}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="hover:underline"
+					>
+						{post.transactionHash?.slice(0, 16)}
+					</a>
+				</p>
+				<p className="text-xs italic text-gray-600">
+					User address: {' '}
+					<a
+						href={`https://sepolia-optimism.etherscan.io/address/${author.walletAddress}`}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="hover:underline"
+					>
+						{author.walletAddress?.slice(0, 8)}
+					</a>
+				</p>
 			</div>
+
+			{/* Bookmark footer */}
+			<div className="my-10">
+				<div className="flex flex-row items-center justify-start">
+					<CollectButton publicationAddress={post.publicationAddress} tokenId={post.tokenId} />
+				</div>
+			</div>
+
 		</div>
 	);
 }

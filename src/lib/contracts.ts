@@ -1,12 +1,19 @@
 import { ethers } from 'ethers';
 import CollectionFactoryABI from '../artifacts/contracts/MinimalFactory.sol/CollectionFactory.json';
 import MinimalCollectionABI from '../artifacts/contracts/MinimalCollection.sol/MinimalCollection.json';
-import { UnsignedTransactionRequest, SendTransactionModalUIOptions, useSendTransaction } from '@privy-io/react-auth';
+import { UnsignedTransactionRequest, SendTransactionModalUIOptions } from '@privy-io/react-auth';
+import { MINIMAL_MARKET_ADDRESS } from '@/constants';
 
 interface TransactionLog {
 	address: string;
 	topics: string[];
 	data: string;
+}
+
+interface TransactionResponse {
+	status: number;
+	logs: TransactionLog[];
+	transactionHash: string;
 }
 
 // Contract instantiation functions (for reading only)
@@ -50,10 +57,6 @@ function parsePostCreatedEvent(logs: TransactionLog[]) {
 		throw new Error('Could not find NewPostCreated event in logs');
 	}
 
-	// Parse the tokenId from the first topic (it's indexed)
-	// Convert from hex to decimal string, removing any leading zeros
-	const tokenId = ethers.BigNumber.from(postLog.topics[1]).toString();
-
 	// Decode the non-indexed parameters from the data field
 	const decodedData = iface.decodeEventLog(
 		'NewPostCreated',
@@ -80,7 +83,7 @@ function parsePostCreatedEvent(logs: TransactionLog[]) {
 export async function createPublication(
 	content: string,
 	factoryAddress: string,
-	sendTransaction: (request: UnsignedTransactionRequest, uiConfig?: SendTransactionModalUIOptions) => Promise<any>
+	sendTransaction: (request: UnsignedTransactionRequest, uiConfig?: SendTransactionModalUIOptions) => Promise<TransactionResponse>
 ): Promise<TransactionResult> {
 	try {
 		// Create the transaction request
@@ -150,7 +153,7 @@ export async function createPublication(
 export async function createPost(
 	content: string,
 	publicationAddress: string,
-	sendTransaction: (request: UnsignedTransactionRequest, uiConfig?: SendTransactionModalUIOptions) => Promise<any>,
+	sendTransaction: (request: UnsignedTransactionRequest, uiConfig?: SendTransactionModalUIOptions) => Promise<TransactionResponse>,
 	userAddress: string
 ): Promise<TransactionResult> {
 	try {
@@ -263,4 +266,100 @@ export function createPublicationAndFirstPostTransaction(
 		data,
 		chainId: 11155420 // Optimism Sepolia
 	};
+}
+
+/**
+ * Creates a transaction to collect a post
+ * @param publicationAddress The address of the publication contract
+ * @param tokenId The ID of the token to collect
+ * @param userAddress The address of the user collecting the post
+ * @returns The transaction request object for Privy
+ */
+export function createCollectTransaction(
+	publicationAddress: string,
+	tokenId: string,
+	userAddress: string
+): UnsignedTransactionRequest {
+	console.log('Creating collect transaction request...');
+	console.log('Parameters:', {
+		publicationAddress,
+		tokenId,
+		userAddress,
+		marketAddress: MINIMAL_MARKET_ADDRESS
+	});
+
+	// Get the contract interface
+	const iface = new ethers.utils.Interface(MinimalCollectionABI.abi);
+
+	// Convert numeric parameters to BigNumber
+	const tokenIdBN = ethers.BigNumber.from(tokenId);
+	const amountBN = ethers.BigNumber.from(1);
+
+	// Set token price (0.00043 ETH)
+	const tokenPrice = ethers.utils.parseEther("0.00043");
+
+	// Encode the function call with the new parameters
+	const data = iface.encodeFunctionData("collect", [
+		tokenIdBN,            // tokenId as BigNumber
+		amountBN,            // amount as BigNumber
+		userAddress,         // recipient address
+		ethers.constants.AddressZero,  // referer (zero address)
+		MINIMAL_MARKET_ADDRESS         // market address
+	]);
+	console.log('Encoded function data:', data);
+
+	// Return the unsigned transaction request
+	const txRequest = {
+		to: publicationAddress,
+		data,
+		value: tokenPrice.toHexString(), // Only include the token price
+		chainId: 11155420 // Optimism Sepolia
+	};
+	console.log('Transaction request created:', txRequest);
+	return txRequest;
+}
+
+export async function collectPost(
+	publicationAddress: string,
+	tokenId: string,
+	sendTransaction: (request: UnsignedTransactionRequest, uiConfig?: SendTransactionModalUIOptions) => Promise<TransactionResponse>,
+	userAddress: string
+): Promise<TransactionResponse> {
+	console.log('Collecting post...');
+
+	try {
+		// Configure the UI options for the transaction
+		const collectUiConfig: SendTransactionModalUIOptions = {
+			description: 'Collect this post',
+			buttonText: 'Collect',
+			transactionInfo: {
+				title: 'Collect Post',
+				action: 'Collect Post',
+				contractInfo: {
+					name: 'Reverv. Publication',
+				}
+			}
+		};
+
+		// Create and send collect transaction
+		const collectTx = createCollectTransaction(publicationAddress, tokenId, userAddress);
+		const collectResult = await sendTransaction(collectTx, collectUiConfig);
+		console.log('Collect transaction result:', collectResult);
+
+		if (collectResult.status !== 1) {
+			throw new Error('Collect transaction failed');
+		}
+
+		return collectResult;
+	} catch (error) {
+		console.error('Error in collectPost:', error);
+		if (error instanceof Error) {
+			console.error('Error details:', {
+				name: error.name,
+				message: error.message,
+				stack: error.stack
+			});
+		}
+		throw error; // Re-throw the error to be handled by the component
+	}
 }

@@ -19,9 +19,10 @@ interface RevervEditorProps {
 	onEditorChange: (content: string) => void;
 	initialContent?: string;
 	readOnly?: boolean;
+	showMenu?: boolean;
 }
 
-export function RevervEditor({ onEditorChange, initialContent, readOnly = false }: RevervEditorProps) {
+export function RevervEditor({ onEditorChange, initialContent, readOnly = false, showMenu = false }: RevervEditorProps) {
 	const editor = useEditor({
 		editable: !readOnly,
 		editorProps: {
@@ -80,7 +81,7 @@ export function RevervEditor({ onEditorChange, initialContent, readOnly = false 
 	return (
 		<>
 			<div className="">
-				{!readOnly && <EditorMenu editor={editor} />}
+				{!readOnly && showMenu && <EditorMenu editor={editor} />}
 				<EditorContent editor={editor} />
 			</div>
 		</>

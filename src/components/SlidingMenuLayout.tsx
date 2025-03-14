@@ -61,9 +61,9 @@ const SlidingMenuLayout = ({ children, isMenuOpen, onClose }: SlidingMenuLayoutP
 			)}
 
 			<div onClick={onClose}>
-				<main className="p-4 h-[calc(100vh-64px)] overflow-auto">
+				<div className="p-4 min-h-[calc(100vh-64px)]">
 					{children}
-				</main>
+				</div>
 			</div>
 		</div>
 	);
