@@ -1,30 +1,91 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import {
 	getUserByUsername,
-	isSubscribedToUser
+	isSubscribedToUser,
+	getPosts,
+	getUserPublications,
+	getUserBookmarks,
+	getPost
 } from '@/lib/db';
 import { useState, useEffect } from 'react';
-import { User } from '@/lib/types';
+import { User, Post } from '@/lib/types';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/hooks/useAuth';
 import { SubscribeButton } from '@/components/SubscribeButton';
+import Link from 'next/link';
+
+interface PostWithTitle {
+	post: Post;
+	displayText: string;
+}
+
+interface ContentNode {
+	type: string;
+	attrs?: {
+		level?: number;
+	};
+	content?: Array<{
+		text?: string;
+	}>;
+}
+
+const ITEMS_LIMIT = 6;
 
 export default function ProfilePage() {
-	// Get the username from the URL parameters
 	const { handle } = useParams();
-	// Get the currently authenticated user from Privy
 	const { user: currentUser } = useAuth();
+	const [user, setUser] = useState<Partial<User> | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isSubscribed, setIsSubscribed] = useState(false);
+	const [userPosts, setUserPosts] = useState<PostWithTitle[]>([]);
+	const [bookmarks, setBookmarks] = useState<PostWithTitle[]>([]);
+	const [expandedSections, setExpandedSections] = useState<{
+		writings: boolean;
+		reading: boolean;
+	}>({
+		writings: false,
+		reading: false
+	});
 
-	// State management
-	const [user, setUser] = useState<Partial<User> | null>(null);          // Profile data of the user being viewed
-	const [isLoading, setIsLoading] = useState(true);                      // Loading state for initial data fetch
-	const [isSubscribed, setIsSubscribed] = useState(false);              // Whether current user is subscribed to this profile
+	const extractDisplayText = (post: Post): string => {
+		try {
+			const content = JSON.parse(post.content);
+			// Look for title (h1)
+			const titleNode = content.content.find((node: ContentNode) =>
+				node.type === 'heading' && node.attrs?.level === 1
+			);
+
+			if (titleNode && titleNode.content && titleNode.content[0]) {
+				return titleNode.content[0].text || 'Untitled';
+			}
+
+			// If no title, get first 60 characters of content
+			const firstTextNode = content.content.find((node: ContentNode) =>
+				node.type === 'paragraph' && node.content && node.content[0]
+			);
+
+			if (firstTextNode && firstTextNode.content) {
+				const text = firstTextNode.content[0].text || '';
+				return text.length > 60 ? text.substring(0, 60) + '...' : text;
+			}
+
+			return 'Untitled';
+		} catch (error) {
+			console.error('Error parsing content:', error);
+			return 'Untitled';
+		}
+	};
+
+	const toggleSection = (section: 'writings' | 'reading') => {
+		setExpandedSections(prev => ({
+			...prev,
+			[section]: !prev[section]
+		}));
+	};
 
 	useEffect(() => {
-		// Function to load profile data and check subscription status
 		async function loadUserData() {
 			if (!handle) return;
 
@@ -33,12 +94,47 @@ export default function ProfilePage() {
 				const userData = await getUserByUsername(decodeURIComponent(handle as string));
 				setUser(userData);
 
-				// Only check subscription status if we have both:
-				// 1. A logged-in user (currentUser)
-				// 2. A valid profile we're viewing (userData)
-				if (currentUser?.id && userData?.id) {
-					const subscribed = await isSubscribedToUser(currentUser.id, userData.id);
-					setIsSubscribed(subscribed);
+				if (userData?.id) {
+					// Get user's publications
+					const publications = await getUserPublications(userData.id);
+
+					// Get all posts for each publication
+					const allPosts: Post[] = [];
+					for (const pub of publications) {
+						const posts = await getPosts(pub.id);
+						allPosts.push(...posts);
+					}
+
+					// Sort posts by creation date and add display text
+					const postsWithTitles = allPosts
+						.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+						.map(post => ({
+							post,
+							displayText: extractDisplayText(post)
+						}));
+					setUserPosts(postsWithTitles);
+
+					// Get user's bookmarks
+					const userBookmarks = await getUserBookmarks(userData.id);
+					const bookmarkedPosts: PostWithTitle[] = [];
+
+					// Fetch full post data for each bookmark
+					for (const bookmark of userBookmarks) {
+						const post = await getPost(bookmark.tokenId, bookmark.publicationAddress);
+						if (post) {
+							bookmarkedPosts.push({
+								post,
+								displayText: extractDisplayText(post)
+							});
+						}
+					}
+					setBookmarks(bookmarkedPosts);
+
+					// Check subscription status if we have a logged-in user
+					if (currentUser?.id) {
+						const subscribed = await isSubscribedToUser(currentUser.id, userData.id);
+						setIsSubscribed(subscribed);
+					}
 				}
 			} catch (error) {
 				console.error('Error loading user:', error);
@@ -48,14 +144,12 @@ export default function ProfilePage() {
 		}
 
 		loadUserData();
-	}, [handle, currentUser?.id]); // Re-run when URL changes or user logs in/out
+	}, [handle, currentUser?.id]);
 
-	// Show loading spinner while fetching initial data
 	if (isLoading) {
 		return <Spinner />;
 	}
 
-	// Show error state if profile doesn't exist
 	if (!user) {
 		return (
 			<div className="flex items-center justify-center px-4 w-full h-full">
@@ -80,24 +174,23 @@ export default function ProfilePage() {
 			title: 'Writings',
 			content: (
 				<div className="space-y-3">
-					<a href="#" className="text-sm block text-gray-700 font-light hover:text-gray-900 hover:underline">
-            ↗ On building a blockchain
-					</a>
-					<a href="#" className="text-sm block text-gray-700 font-light hover:text-gray-900">
-            ↗ On crypto startup ideas for 2024
-					</a>
-					<a href="#" className="text-sm block text-gray-700 font-light hover:text-gray-900">
-            ↗ On crypto startup ideas for 2023
-					</a>
-					<a href="#" className="text-sm block text-gray-700 font-light hover:text-gray-900">
-            ↗ On the future of pensions in Canada
-					</a>
-					<a href="#" className="text-sm block text-gray-700 font-light hover:text-gray-900">
-            ↗ On Uber&apos;s surge pricing
-					</a>
-					<a href="#" className="text-xs block text-gray-500 hover:text-gray-700">
-            View all
-					</a>
+					{(expandedSections.writings ? userPosts : userPosts.slice(0, ITEMS_LIMIT)).map(({ post, displayText }) => (
+						<Link
+							key={post.id}
+							href={`/${user.username}/${post.tokenId}`}
+							className="text-sm block text-gray-700 font-light hover:text-gray-900 hover:underline"
+						>
+							↗ {displayText}
+						</Link>
+					))}
+					{userPosts.length > ITEMS_LIMIT && (
+						<button
+							onClick={() => toggleSection('writings')}
+							className="text-xs block text-gray-500 hover:text-gray-700 mt-4"
+						>
+							{expandedSections.writings ? 'Show less' : `View all (${userPosts.length})`}
+						</button>
+					)}
 				</div>
 			)
 		},
@@ -105,27 +198,24 @@ export default function ProfilePage() {
 			title: 'Reading',
 			content: (
 				<div className="space-y-3">
-					<div className="flex items-center space-x-2">
-						<a href="#" className="text-gray-700 hover:text-gray-900">
-              The Power Broker ↗
-						</a>
-						<span className="text-gray-500">by Robert A. Caro</span>
-						<span className="text-xs bg-gray-100 px-2 py-0.5 rounded">READING</span>
-					</div>
-					<div className="flex items-center space-x-2">
-						<a href="#" className="text-gray-700 hover:text-gray-900">
-              A Gentleman in Moscow ↗
-						</a>
-						<span className="text-gray-500">by Amor Towles</span>
-						<span className="text-xs bg-gray-100 px-2 py-0.5 rounded">READING</span>
-					</div>
-					<div className="flex items-center space-x-2">
-						<a href="#" className="text-gray-700 hover:text-gray-900">
-              The Housemaid ↗
-						</a>
-						<span className="text-gray-500">by Freida McFadden</span>
-						<span className="text-xs bg-gray-200 px-2 py-0.5 rounded text-gray-500">DONE</span>
-					</div>
+					{(expandedSections.reading ? bookmarks : bookmarks.slice(0, ITEMS_LIMIT)).map(({ post, displayText }) => (
+						<div key={post.id} className="flex items-center space-x-2">
+							<Link
+								href={`/${user.username}/${post.tokenId}`}
+								className="text-gray-700 hover:text-gray-900"
+							>
+								{displayText} ↗
+							</Link>
+						</div>
+					))}
+					{bookmarks.length > ITEMS_LIMIT && (
+						<button
+							onClick={() => toggleSection('reading')}
+							className="text-xs block text-gray-500 hover:text-gray-700 mt-4"
+						>
+							{expandedSections.reading ? 'Show less' : `View all (${bookmarks.length})`}
+						</button>
+					)}
 				</div>
 			)
 		}
