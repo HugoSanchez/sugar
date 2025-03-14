@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { collectPost } from '@/lib/contracts';
+import { createBookmark } from '@/lib/db';
 import { Bookmark } from 'lucide-react';
 import { UnsignedTransactionRequest, SendTransactionModalUIOptions } from '@privy-io/react-auth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CollectButtonProps {
 	publicationAddress: string;
@@ -23,6 +25,7 @@ interface TransactionResponse {
 export default function CollectButton({ publicationAddress, tokenId, variant = 'default' }: CollectButtonProps) {
 	const [isCollecting, setIsCollecting] = useState(false);
 	const { login, authenticated, sendTransaction, user } = usePrivy();
+	const { user: dbUser } = useAuth();
 
 	const handleCollect = async () => {
 		console.log('Starting collect process...');
@@ -30,7 +33,7 @@ export default function CollectButton({ publicationAddress, tokenId, variant = '
 		console.log('Token ID:', tokenId);
 		console.log('Authentication status:', authenticated);
 
-		if (!authenticated || !user?.wallet?.address) {
+		if (!authenticated || !user?.wallet?.address || !dbUser?.id) {
 			console.log('User not authenticated or wallet not available, triggering login...');
 			login();
 			return;
@@ -66,8 +69,40 @@ export default function CollectButton({ publicationAddress, tokenId, variant = '
 				console.error('Transaction failed with status:', result.status);
 				// TODO: Add error toast notification
 			} else {
-				// TODO: Add success toast notification
+				// Store the bookmark in the database
+				console.log('Attempting to store bookmark with data:', {
+					userId: dbUser.id,
+					publicationAddress,
+					tokenId,
+					transactionHash: result.transactionHash
+				});
+
+				try {
+					const bookmark = await createBookmark({
+						userId: dbUser.id,
+						publicationAddress,
+						tokenId,
+						transactionHash: result.transactionHash
+					});
+
+					if (bookmark) {
+						console.log('Successfully stored bookmark:', bookmark);
+					} else {
+						console.error('Failed to store bookmark in database - returned null');
+					}
+				} catch (error) {
+					console.error('Error storing bookmark:', error);
+					if (error instanceof Error) {
+						console.error('Bookmark error details:', {
+							name: error.name,
+							message: error.message,
+							stack: error.stack
+						});
+					}
+				}
+
 				console.log('Successfully collected post:', result.transactionHash);
+				// TODO: Add success toast notification
 			}
 		} catch (error: unknown) {
 			console.error('Error in collect transaction:', error);

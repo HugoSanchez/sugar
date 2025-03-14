@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { User, CreateUserInput, Publication, CreatePublicationInput, Post, CreatePostInput } from './types';
+import { User, CreateUserInput, Publication, CreatePublicationInput, Post, CreatePostInput, Bookmark, CreateBookmarkInput } from './types';
 
 // Initialize Supabase client with environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -618,6 +618,122 @@ export async function getPost(tokenId: string, publicationAddress?: string): Pro
 	} catch (error) {
 		console.error('Error getting post by token ID:', error);
 		throw error;
+	}
+}
+
+/**
+ * Creates a new bookmark
+ * @param bookmark - The bookmark data to create
+ * @returns The created bookmark object, or null if creation failed
+ */
+export async function createBookmark(bookmark: CreateBookmarkInput): Promise<Bookmark | null> {
+	try {
+		console.log('Creating bookmark with data:', bookmark);
+
+		const { data, error } = await supabase
+			.from('bookmarks')
+			.insert([{
+				user_id: bookmark.userId,
+				publication_address: bookmark.publicationAddress,
+				token_id: bookmark.tokenId,
+				transaction_hash: bookmark.transactionHash
+			}])
+			.select()
+			.single();
+
+		if (error) {
+			console.error('Supabase error creating bookmark:', error);
+			throw error;
+		}
+
+		console.log('Supabase response data:', data);
+
+		if (data) {
+			const formattedBookmark = {
+				id: data.id,
+				userId: data.user_id,
+				publicationAddress: data.publication_address,
+				tokenId: data.token_id,
+				transactionHash: data.transaction_hash,
+				createdAt: new Date(data.created_at),
+				updatedAt: new Date(data.updated_at)
+			};
+			console.log('Formatted bookmark:', formattedBookmark);
+			return formattedBookmark;
+		}
+		return null;
+	} catch (error) {
+		console.error('Error creating bookmark:', error);
+		if (error instanceof Error) {
+			console.error('Error details:', {
+				name: error.name,
+				message: error.message,
+				stack: error.stack
+			});
+		}
+		return null;
+	}
+}
+
+/**
+ * Checks if a user has bookmarked a specific post
+ * @param userId - The database ID of the user
+ * @param publicationAddress - The address of the publication
+ * @param tokenId - The token ID of the post
+ * @returns Boolean indicating if the bookmark exists
+ */
+export async function hasBookmarked(
+	userId: string,
+	publicationAddress: string,
+	tokenId: string
+): Promise<boolean> {
+	try {
+		const { data, error } = await supabase
+			.from('bookmarks')
+			.select('id')
+			.eq('user_id', userId)
+			.eq('publication_address', publicationAddress)
+			.eq('token_id', tokenId)
+			.single();
+
+		if (error && error.code !== 'PGRST116') { // PGRST116 is the "not found" error code
+			throw error;
+		}
+
+		return !!data;
+	} catch (error) {
+		console.error('Error checking bookmark:', error);
+		return false;
+	}
+}
+
+/**
+ * Gets all bookmarks for a user
+ * @param userId - The database ID of the user
+ * @returns Array of bookmark objects
+ */
+export async function getUserBookmarks(userId: string): Promise<Bookmark[]> {
+	try {
+		const { data, error } = await supabase
+			.from('bookmarks')
+			.select('*')
+			.eq('user_id', userId)
+			.order('created_at', { ascending: false });
+
+		if (error) throw error;
+
+		return data.map(bookmark => ({
+			id: bookmark.id,
+			userId: bookmark.user_id,
+			publicationAddress: bookmark.publication_address,
+			tokenId: bookmark.token_id,
+			transactionHash: bookmark.transaction_hash,
+			createdAt: new Date(bookmark.created_at),
+			updatedAt: new Date(bookmark.updated_at)
+		}));
+	} catch (error) {
+		console.error('Error getting user bookmarks:', error);
+		return [];
 	}
 }
 

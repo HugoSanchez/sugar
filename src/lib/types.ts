@@ -40,3 +40,15 @@ export interface Post {
 
 export type CreatePublicationInput = Omit<Publication, 'id' | 'createdAt' | 'updatedAt'>;
 export type CreatePostInput = Omit<Post, 'id' | 'createdAt' | 'updatedAt'>;
+
+export interface Bookmark {
+  id: string;
+  userId: string;
+  publicationAddress: string;
+  tokenId: string;
+  transactionHash: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type CreateBookmarkInput = Omit<Bookmark, 'id' | 'createdAt' | 'updatedAt'>;
